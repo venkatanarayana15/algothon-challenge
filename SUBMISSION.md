@@ -9,7 +9,7 @@ running late is total.
 ## T-minus 20 minutes: verify everything
 
 ```bash
-npm run selftest      # must print 13/13
+npm run selftest      # must print 19/19
 npm run benchmark     # must print detection / false-positive lines
 npm run build         # must succeed
 ```

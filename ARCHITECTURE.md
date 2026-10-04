@@ -11,7 +11,9 @@ source ─▶ analyze.js ─▶ generator.js ─▶ sandbox.js ─▶ shrinker.j
 ```
 
 `analysis.js` orchestrates. Each stage is pure and independently testable; the
-self-test exercises the whole chain against thirteen seeded submissions.
+self-test exercises the whole chain against nineteen seeded cases: thirteen seeded
+submissions, three deliberately vulnerable validators that must be bypassed, and
+three correct validators that must stay silent.
 
 ## Design decisions
 

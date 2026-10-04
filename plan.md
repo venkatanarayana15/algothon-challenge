@@ -24,7 +24,7 @@ Rather than assume the existing build works, it was exercised directly.
 | Check | Result |
 |---|---|
 | `npm run typecheck` | clean |
-| `npm run selftest` | **13/13** produce a counterexample |
+| `npm run selftest` | **19/19** — 13 counterexamples, 3 security bypasses, 3 correct validators with no false positive |
 | `npm run benchmark` | 95% detection, **0% false positives**, 70% class accuracy — stable across 3 consecutive runs |
 | `npm run check:data` | passes |
 | `GET /api/health` | `{"ok":true,"llm":null}` — graceful degradation confirmed |
@@ -83,7 +83,7 @@ that is deliberate: in `if (q <= 0) return "must be positive"` those comparisons
 produce an oracle that falsely accuses correct validators. Guessing a security
 policy from the code it is meant to police is the wrong direction of trust.
 
-Regression-checked after the change: typecheck clean, selftest 13/13, benchmark
+Regression-checked after the change: typecheck clean, selftest 19/19, benchmark
 unchanged at 95% / 0% / 70%.
 
 Note this is also the honest demonstration of ReDoS and inverted auth comparisons:
@@ -313,7 +313,7 @@ Effort allocated against actual weighting, not against what is most fun to build
 | Technical Implementation | 20% | Strong: sandbox, AST analysis, ddmin shrinking, 14 oracles | Architecture diagram + decisions doc |
 | Innovation & Problem Understanding | 20% | Differential + deterministic core, LLM optional | Sharpen the "why this is not another AI wrapper" story |
 | UX / Presentation | 15% | Strong editor + hero, but no deployed URL | **Deploy. Biggest cheap win available.** |
-| Testing & Reliability | 15% | **Best-in-class already**: 13/13 selftest, 21+9 benchmark, published FP rate | Map explicitly onto the PS checklist |
+| Testing & Reliability | 15% | **Best-in-class already**: 19/19 selftest, 21+9 benchmark, published FP rate | Map explicitly onto the PS checklist |
 
 The uncomfortable truth in this table: our strongest asset (reliability evidence) is
 worth 15%, while the thing we have not done (a demonstrable PS workflow) is worth 30%.
@@ -332,7 +332,7 @@ These are theme-independent and block everything else.
 | 0.2 | Create GitHub repo, push | Submission requires a repository link |
 | 0.3 | Deploy (Render) from the remote, verify cold HTTPS load | "Deployed demo" checkbox; 15% UX + supports 30% functionality |
 | 0.4 | Verify the live URL from a clean session, no API keys, on mobile width | An async judge on a phone is the real reviewer |
-| 0.5 | Confirm `npm run selftest` = 13/13 and `typecheck` clean on a fresh clone | Proves the repo actually runs for a stranger |
+| 0.5 | Confirm `npm run selftest` = 19/19 and `typecheck` clean on a fresh clone | Proves the repo actually runs for a stranger |
 
 ### Phase 1 — Build, 10:00 → 17:00
 | # | Task | Done when |
@@ -421,7 +421,7 @@ Re-sequenced at **07:50 IST**. 2h10m remain before the window opens.
    it reports a type-coercion `bypass` (`expected: reject, actual: accept`, class
    `validation-bypass`) for `validateQty`, `isValidAge` and `isNull` shapes, and a
    correctly-written validator still produces no false positive. See §0.1 for why the
-   reported input varies between runs. Typecheck clean, selftest 13/13, benchmark
+   reported input varies between runs. Typecheck clean, selftest 19/19, benchmark
    unchanged at 95% / 0% / 70%.
 4a. ~~**Task 1.4 — policy selector in the UI.**~~ **ALREADY WIRED** (policies.ts →
    Editor → App → api → server), verified with the exact payload the browser sends.

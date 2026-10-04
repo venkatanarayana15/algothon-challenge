@@ -146,7 +146,7 @@ npm run dev        # api on :3001, web on :5173
 npm run build      # static bundle into dist/
 npm start          # single process, serves api + web on :3001
 
-npm run selftest   # all 13 seeded examples produce a counterexample
+npm run selftest   # 19 checks: 13 counterexamples, 3 bypasses, 3 clean validators
 npm run benchmark  # detection rate, false positives, class accuracy
 npm run check:data # fails if web/src/data is out of date
 ```

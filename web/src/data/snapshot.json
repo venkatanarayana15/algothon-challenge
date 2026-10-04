@@ -1,6 +1,114 @@
 {
-  "totalExamples": 13,
+  "totalExamples": 16,
   "entries": [
+    {
+      "id": "validate-qty-nan-bypass",
+      "title": "Quantity check that NaN walks straight through",
+      "difficulty": "easy",
+      "language": "JavaScript",
+      "spec": "Accept a quantity only if it is a whole number from 1 to 100. Return null when accepted, otherwise an error message.",
+      "tags": [
+        "security",
+        "validation bypass",
+        "NaN",
+        "OWASP A03"
+      ],
+      "bugClass": "Missing type and finiteness guard",
+      "code": "// POST /cart/items  ->  null | error string\nfunction validateQty(q) {\n  if (q <= 0) return 'must be positive';\n  if (q > 100) return 'too many';\n  return null;\n}",
+      "rootCause": "Every comparison with NaN is false, so both guards fall through and the function returns null — meaning accepted. A range check written this way rejects -1 and 1e9 while waving through NaN, which then flows into arithmetic and poisons the total.",
+      "fix": "Reject non-numbers before the range test: `if (typeof q !== \"number\" || !Number.isFinite(q)) return \"not a number\";`",
+      "provenance": false,
+      "counterexample": "validateQty(NaN)",
+      "kind": "wrong-answer",
+      "verdict": "bypass",
+      "security": true,
+      "expected": "reject",
+      "actual": "accept",
+      "mutationScore": {
+        "killed": 1,
+        "total": 1,
+        "ratio": 1
+      },
+      "params": [
+        {
+          "name": "q",
+          "type": "number",
+          "ambiguous": false
+        }
+      ]
+    },
+    {
+      "id": "validate-age-nan-bypass",
+      "title": "Age gate that Infinity and \"25\" both pass",
+      "difficulty": "medium",
+      "language": "JavaScript",
+      "spec": "Accept an age only if it is a whole number from 0 to 120. Return null when accepted, otherwise an error message.",
+      "tags": [
+        "security",
+        "validation bypass",
+        "type confusion",
+        "OWASP A03"
+      ],
+      "bugClass": "Missing type guard",
+      "code": "// signup  ->  null | error string\nfunction validateAge(age) {\n  if (age < 0) return 'age cannot be negative';\n  if (age > 120) return 'implausible age';\n  return null;\n}",
+      "rootCause": "The string \"25\" also passes, because JavaScript coerces it for both comparisons. The check constrains a range without ever establishing that it was given a number, so non-numeric values are coerced into looking valid.",
+      "fix": "Establish the type first: `if (typeof age !== \"number\" || !Number.isFinite(age)) return \"not a number\";`",
+      "provenance": false,
+      "counterexample": "validateAge(NaN)",
+      "kind": "wrong-answer",
+      "verdict": "bypass",
+      "security": true,
+      "expected": "reject",
+      "actual": "accept",
+      "mutationScore": {
+        "killed": 2,
+        "total": 2,
+        "ratio": 1
+      },
+      "params": [
+        {
+          "name": "age",
+          "type": "number",
+          "ambiguous": false
+        }
+      ]
+    },
+    {
+      "id": "validate-port-range-bypass",
+      "title": "Port validator with no upper bound for non-numbers",
+      "difficulty": "medium",
+      "language": "JavaScript",
+      "spec": "Accept a port only if it is a whole number from 1 to 65535. Return null when accepted, otherwise an error message.",
+      "tags": [
+        "security",
+        "validation bypass",
+        "NaN",
+        "input validation"
+      ],
+      "bugClass": "Missing finiteness guard",
+      "code": "// service config  ->  null | error string\nfunction validatePort(port) {\n  if (port < 1) return 'port must be positive';\n  if (port > 65535) return 'port out of range';\n  return null;\n}",
+      "rootCause": "The bounds are right, so this reads as correct on inspection. But NaN satisfies neither comparison, so an undefined port reaches the client as an accepted value and the failure surfaces later, somewhere unrelated.",
+      "fix": "Reject NaN explicitly: `if (!Number.isFinite(port)) return \"not a number\";`",
+      "provenance": false,
+      "counterexample": "validatePort(NaN)",
+      "kind": "wrong-answer",
+      "verdict": "bypass",
+      "security": true,
+      "expected": "reject",
+      "actual": "accept",
+      "mutationScore": {
+        "killed": 2,
+        "total": 2,
+        "ratio": 1
+      },
+      "params": [
+        {
+          "name": "port",
+          "type": "number",
+          "ambiguous": false
+        }
+      ]
+    },
     {
       "id": "fib-missing-base-case",
       "title": "Fibonacci with a missing base case",
@@ -19,6 +127,8 @@
       "provenance": false,
       "counterexample": "fib(-1)",
       "kind": "threw",
+      "verdict": null,
+      "security": false,
       "expected": 0,
       "mutationScore": {
         "killed": 0,
@@ -50,6 +160,8 @@
       "provenance": false,
       "counterexample": "isPrime(-1)",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": false,
       "actual": true,
       "mutationScore": {
@@ -82,6 +194,8 @@
       "provenance": false,
       "counterexample": "gcd(-1, 0)",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": 1,
       "actual": -1,
       "mutationScore": {
@@ -119,6 +233,8 @@
       "provenance": false,
       "counterexample": "sum([])",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": 0,
       "mutationScore": {
         "killed": 2,
@@ -150,6 +266,8 @@
       "provenance": false,
       "counterexample": "max([])",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "actual": {
         "$nonfinite": "-Infinity"
       },
@@ -183,6 +301,8 @@
       "provenance": false,
       "counterexample": "secondLargest([Infinity, Infinity])",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": null,
       "actual": {
         "$nonfinite": "Infinity"
@@ -217,6 +337,8 @@
       "provenance": false,
       "counterexample": "reverseString(\"u\")",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": "u",
       "actual": "",
       "mutationScore": {
@@ -249,6 +371,8 @@
       "provenance": false,
       "counterexample": "countVowels(\" \")",
       "kind": "threw",
+      "verdict": null,
+      "security": false,
       "expected": 0,
       "mutationScore": {
         "killed": 1,
@@ -280,6 +404,8 @@
       "provenance": false,
       "counterexample": "rotateRight([1, 0], -1)",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": [
         0,
         1
@@ -323,6 +449,8 @@
       "provenance": false,
       "counterexample": "isSorted([1, 0])",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": false,
       "actual": true,
       "mutationScore": {
@@ -355,6 +483,8 @@
       "provenance": false,
       "counterexample": "removeDuplicates([1, 0])",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": [
         1,
         0
@@ -393,6 +523,8 @@
       "provenance": false,
       "counterexample": "binarySearch([1], 1)",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": 0,
       "actual": 1,
       "mutationScore": {
@@ -431,6 +563,8 @@
       "provenance": false,
       "counterexample": "indexOfTarget([1, 1], 1)",
       "kind": "wrong-answer",
+      "verdict": null,
+      "security": false,
       "expected": 0,
       "actual": 1,
       "mutationScore": {

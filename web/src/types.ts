@@ -114,6 +114,8 @@ export interface SnapshotEntry {
   provenance: boolean
   counterexample: string
   kind: FindingKind
+  verdict?: 'bypass' | 'false-rejection' | null
+  security?: boolean
   expected: unknown
   actual: unknown
   mutationScore: { killed: number; total: number; ratio: number } | null

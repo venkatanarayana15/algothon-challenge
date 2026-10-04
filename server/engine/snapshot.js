@@ -14,14 +14,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { analyze } from './analysis.js'
 import { toJsonSafe } from './json-safe.js'
-import { EXAMPLES, PROVENANCE_CASE } from '../examples.js'
+import { EXAMPLES, SECURITY_EXAMPLES, PROVENANCE_CASE } from '../examples.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUTPUT = path.join(__dirname, '..', '..', 'web', 'src', 'data', 'snapshot.json')
 
 const entries = []
 
-for (const example of [...EXAMPLES, PROVENANCE_CASE]) {
+// Security validators first: on a CYBER-02 submission the headline finding
+// should be a bypass, not an off-by-one in a search function.
+for (const example of [...SECURITY_EXAMPLES, ...EXAMPLES, PROVENANCE_CASE]) {
   const functionName = example.code.match(/function\s+([A-Za-z0-9_$]+)/)?.[1]
   const report = await analyze(
     { code: example.code, functionName, oracleSignature: example.oracleSignature },
@@ -52,6 +54,8 @@ for (const example of [...EXAMPLES, PROVENANCE_CASE]) {
     provenance: Boolean(example.provenance),
     counterexample: report.finding.call,
     kind: report.finding.kind,
+    verdict: report.finding.verdict ?? null,
+    security: example.tags?.includes('security') ?? false,
     expected: report.finding.expected,
     actual: report.finding.actual,
     mutationScore: report.mutationScore

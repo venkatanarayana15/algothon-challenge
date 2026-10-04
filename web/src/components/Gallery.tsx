@@ -97,13 +97,31 @@ export function Gallery({ onPickEntry }: Props) {
                     {entry.counterexample}
                   </code>
                   <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11px]">
-                    <span className="text-rose-400/80">
-                      returned <span className="font-mono text-rose-200">{formatValue(entry.actual)}</span>
-                    </span>
-                    <span className="text-emerald-400/80">
-                      expected{' '}
-                      <span className="font-mono text-emerald-200">{formatValue(entry.expected)}</span>
-                    </span>
+                    {entry.verdict === 'bypass' ? (
+                      <>
+                        <span className="text-rose-400/80">
+                          validator said{' '}
+                          <span className="font-mono text-rose-200">{String(entry.actual)}</span>
+                        </span>
+                        <span className="text-emerald-400/80">
+                          should have said{' '}
+                          <span className="font-mono text-emerald-200">{String(entry.expected)}</span>
+                        </span>
+                        <span className="chip border-rose-500/40 bg-rose-500/15 font-semibold uppercase tracking-wide text-rose-200">
+                          bypass
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-rose-400/80">
+                          returned <span className="font-mono text-rose-200">{formatValue(entry.actual)}</span>
+                        </span>
+                        <span className="text-emerald-400/80">
+                          expected{' '}
+                          <span className="font-mono text-emerald-200">{formatValue(entry.expected)}</span>
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 

@@ -20,8 +20,14 @@ const STATS = [
  */
 export function Hero({ onPickEntry }: Props) {
   const entries = snapshot.entries as SnapshotEntry[]
+  // A validation bypass leads. On a security submission the finding that
+  // matters is the one that says "this input should never have been accepted",
+  // and a judge should meet that before they meet an off-by-one.
   const headline: SnapshotEntry | undefined =
-    entries.find((e) => e.id === 'binarysearch-off-by-one') ?? entries[0]
+    entries.find((e) => e.id === 'validate-qty-nan-bypass') ??
+    entries.find((e) => e.id === 'binarysearch-off-by-one') ??
+    entries[0]
+  const isBypass = headline?.verdict === 'bypass'
 
   return (
     <header className="relative overflow-hidden">
@@ -69,7 +75,7 @@ export function Hero({ onPickEntry }: Props) {
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
                     <span className="text-[11px] font-medium text-slate-400">
-                      real engine output · {headline.title}
+                      {isBypass ? 'security finding' : 'real engine output'} · {headline.title}
                     </span>
                   </div>
                   <span className={`chip ${DIFFICULTY_TONE[headline.difficulty]}`}>
@@ -78,30 +84,60 @@ export function Hero({ onPickEntry }: Props) {
                 </div>
 
                 <div className="p-5">
-                  <p className="label mb-2">smallest input that breaks it</p>
+                  <p className="label mb-2">
+                    {isBypass
+                      ? 'this input should have been rejected, and was not'
+                      : 'smallest input that breaks it'}
+                  </p>
                   <code className="block font-mono text-lg font-semibold text-rose-200">
                     {headline.counterexample}
                   </code>
 
+                  {isBypass && (
+                    <span className="chip mt-3 border-rose-500/40 bg-rose-500/15 font-semibold uppercase tracking-wide text-rose-200">
+                      validation bypass
+                    </span>
+                  )}
+
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-lg border border-white/[0.06] bg-ink-950/60 p-3">
-                      <p className="label mb-1.5 text-rose-400/70">returned</p>
-                      <code className="font-mono text-[13px] text-rose-200">
-                        {formatValue(headline.actual)}
-                      </code>
+                      <p className="label mb-1.5 text-rose-400/70">
+                        {isBypass ? 'validator said' : 'returned'}
+                      </p>
+                      {isBypass ? (
+                        <p className="text-[13px] text-rose-200">
+                          accept
+                          <span className="text-slate-500"> — let it through</span>
+                        </p>
+                      ) : (
+                        <code className="font-mono text-[13px] text-rose-200">
+                          {formatValue(headline.actual)}
+                        </code>
+                      )}
                     </div>
                     <div className="rounded-lg border border-white/[0.06] bg-ink-950/60 p-3">
-                      <p className="label mb-1.5 text-emerald-400/70">should be</p>
-                      <code className="font-mono text-[13px] text-emerald-200">
-                        {formatValue(headline.expected)}
-                      </code>
+                      <p className="label mb-1.5 text-emerald-400/70">
+                        {isBypass ? 'should have said' : 'should be'}
+                      </p>
+                      {isBypass ? (
+                        <p className="text-[13px] text-emerald-200">
+                          reject
+                          <span className="text-slate-500"> — NaN is not in range</span>
+                        </p>
+                      ) : (
+                        <code className="font-mono text-[13px] text-emerald-200">
+                          {formatValue(headline.expected)}
+                        </code>
+                      )}
                     </div>
                   </div>
 
-                  <p className="mt-4 border-t border-white/[0.06] pt-4 text-[13px] leading-relaxed text-slate-400">
-                    {headline.bugClass}. Found by differential testing against an independent
-                    implementation, then shrunk to this input.
-                  </p>
+                <p className="mt-4 border-t border-white/[0.06] pt-4 text-[13px] leading-relaxed text-slate-400">
+                  {headline.bugClass}.{' '}
+                  {isBypass
+                    ? 'Every comparison with NaN is false, so both range guards fall through. Found by holding the validator to the rule its own comparisons state, then shrinking to the smallest input that slips past.'
+                    : 'Found by differential testing against an independent implementation, then shrunk to this input.'}
+                </p>
 
                   <button
                     type="button"
