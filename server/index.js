@@ -8,6 +8,8 @@ import { toJsonSafe } from './engine/json-safe.js'
 import { EXAMPLES, SECURITY_EXAMPLES } from './examples.js'
 import { auditTarget } from './target/audit.js'
 import { buildRegressionTest } from './target/regression-test.js'
+import { BENCHMARK_CASES } from './benchmarks.js'
+import { runBenchmarkCases, buildBenchmarkPayload } from './engine/benchmark.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -70,6 +72,65 @@ app.get('/api/audit', async (_req, res) => {
   } catch (err) {
     console.error('[audit] failed:', err)
     res.status(500).json({ error: 'The audit failed to complete.', kind: 'internal' })
+  }
+})
+
+/**
+ * Live benchmark, in chunks.
+ *
+ * The full 30-case suite takes over a minute, which is too long to hold a
+ * single connection on hosted tiers -- and the site should not go quiet for
+ * that long with no feedback. So the client pages through the corpus six
+ * cases at a time, renders each chunk as it lands, and posts the accumulated
+ * rows to /summarize for the final table. Same functions, same budgets, same
+ * numbers as `npm run benchmark`.
+ */
+app.get('/api/benchmark', rateLimit, async (req, res) => {
+  try {
+    const total = BENCHMARK_CASES.length
+    const offset = Math.min(total, Math.max(0, Number.parseInt(req.query.offset, 10) || 0))
+    const limit = Math.min(10, Math.max(1, Number.parseInt(req.query.limit, 10) || 6))
+    const cases = BENCHMARK_CASES.slice(offset, offset + limit)
+    const results = await runBenchmarkCases(cases, { quiet: true })
+    res.json({
+      offset,
+      limit,
+      total,
+      done: offset + results.length >= total,
+      rows: results.map((r) => ({
+        id: r.id,
+        expect: r.expect,
+        truth: r.truth,
+        predicted: r.predicted,
+        found: r.found,
+        correctPrediction: r.correctPrediction,
+        counterexample: r.counterexample,
+        kind: r.kind,
+      })),
+    })
+  } catch (err) {
+    console.error('[benchmark] chunk failed:', err)
+    res.status(500).json({ error: 'That benchmark chunk failed to complete.', kind: 'internal' })
+  }
+})
+
+app.post('/api/benchmark/summarize', rateLimit, (req, res) => {
+  try {
+    const rows = req.body?.rows
+    if (!Array.isArray(rows) || rows.length === 0 || rows.length > BENCHMARK_CASES.length) {
+      res.status(400).json({ error: 'Provide the measured rows to summarize.', kind: 'bad-request' })
+      return
+    }
+    for (const r of rows) {
+      if (typeof r?.id !== 'string' || (r.expect !== 'bug' && r.expect !== 'correct')) {
+        res.status(400).json({ error: 'Each row needs an id and an expect of bug or correct.', kind: 'bad-request' })
+        return
+      }
+    }
+    res.json(buildBenchmarkPayload(rows).payload)
+  } catch (err) {
+    console.error('[benchmark] summarize failed:', err)
+    res.status(500).json({ error: 'The summary failed to build.', kind: 'internal' })
   }
 })
 

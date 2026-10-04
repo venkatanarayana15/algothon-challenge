@@ -151,7 +151,7 @@
       "predicted": "non-termination",
       "found": true,
       "correctPrediction": false,
-      "counterexample": "correctFib(2147483645)",
+      "counterexample": "correctFib(2147483644)",
       "kind": "timeout"
     },
     {
@@ -341,7 +341,7 @@
       "predicted": "non-determinism",
       "found": true,
       "correctPrediction": true,
-      "counterexample": "noisyTotal([-1])",
+      "counterexample": "noisyTotal([0])",
       "kind": "wrong-answer"
     },
     {

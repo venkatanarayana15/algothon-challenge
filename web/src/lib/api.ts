@@ -104,3 +104,62 @@ export async function fetchRegressionTest(signal?: AbortSignal): Promise<{
   if (!response.ok) throw new RequestError('Could not generate the regression test.', 'network')
   return (await response.json()) as { filename: string; contents: string; runs: number }
 }
+
+export interface BenchmarkRow {
+  id: string
+  expect: 'bug' | 'correct'
+  truth: string
+  predicted: string
+  found: boolean
+  correctPrediction: boolean
+  counterexample: string | null
+  kind: string | null
+}
+
+export interface BenchmarkPayload {
+  summary: {
+    totalCases: number
+    bugCases: number
+    controlCases: number
+    detectionRate: number
+    falsePositiveRate: number
+    classAccuracy: number
+    missed: string[]
+    falsePositives: string[]
+    byClass: Array<{ class: string; total: number; detected: number; named: number; detectionRate: number }>
+  }
+  classes: Record<string, string>
+  rows: BenchmarkRow[]
+}
+
+/**
+ * One slice of the live benchmark. The suite is paged because a full run
+ * takes over a minute -- short requests stay alive on hosted tiers and the
+ * table can fill in progressively instead of going quiet.
+ */
+export async function fetchBenchmarkChunk(
+  offset: number,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<{ offset: number; limit: number; total: number; done: boolean; rows: BenchmarkRow[] }> {
+  let response: Response
+  try {
+    response = await fetch(`/api/benchmark?offset=${offset}&limit=${limit}`, { signal })
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw err
+    throw new RequestError('Could not reach the analysis server.', 'network')
+  }
+  if (!response.ok) throw new RequestError('That benchmark chunk failed.', 'internal')
+  return (await response.json()) as {
+    offset: number
+    limit: number
+    total: number
+    done: boolean
+    rows: BenchmarkRow[]
+  }
+}
+
+/** Aggregate measured rows into the summary the matrix renders. */
+export function summarizeBenchmark(rows: BenchmarkRow[], signal?: AbortSignal) {
+  return post<BenchmarkPayload>('/api/benchmark/summarize', { rows }, signal)
+}

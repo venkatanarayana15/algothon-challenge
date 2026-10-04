@@ -1,5 +1,13 @@
-import benchmark from '../data/benchmark.json'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import snapshot from '../data/benchmark.json'
 import { CLASS_ADVICE } from '../lib/advice'
+import {
+  RequestError,
+  fetchBenchmarkChunk,
+  summarizeBenchmark,
+  type BenchmarkPayload,
+  type BenchmarkRow,
+} from '../lib/api'
 
 interface ClassRow {
   class: string
@@ -33,8 +41,78 @@ interface BenchmarkData {
  * dropped -- a benchmark that cannot fail is not a benchmark.
  */
 export function BenchmarkMatrix() {
-  const { summary, classes } = benchmark as unknown as BenchmarkData
+  const [live, setLive] = useState<BenchmarkPayload | null>(null)
+  const [running, setRunning] = useState(false)
+  const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [elapsed, setElapsed] = useState(0)
+  const [runSeconds, setRunSeconds] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => () => abortRef.current?.abort(), [])
+
+  useEffect(() => {
+    if (!running) return
+    const start = Date.now()
+    const id = window.setInterval(() => setElapsed((Date.now() - start) / 1000), 250)
+    return () => window.clearInterval(id)
+  }, [running])
+
+  /**
+   * Measure the suite live on this server, six cases per request.
+   *
+   * A full run takes over a minute, which is too long to hold one connection
+   * on hosted tiers -- so the client pages through the corpus and the table
+   * swaps over only when every case has reported. Cancelling stops asking for
+   * more chunks; whatever the server already finished is discarded, and the
+   * committed snapshot stays exactly where it was.
+   */
+  const runLive = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    setRunning(true)
+    setError(null)
+    setElapsed(0)
+    const started = Date.now()
+
+    try {
+      const CHUNK = 6
+      let offset = 0
+      let total = 0
+      const rows: BenchmarkRow[] = []
+      for (;;) {
+        const chunk = await fetchBenchmarkChunk(offset, CHUNK, controller.signal)
+        total = chunk.total
+        rows.push(...chunk.rows)
+        offset += chunk.rows.length
+        setProgress({ done: Math.min(offset, total), total })
+        if (chunk.done || chunk.rows.length === 0) break
+      }
+      const payload = await summarizeBenchmark(rows, controller.signal)
+      setLive(payload)
+      setRunSeconds((Date.now() - started) / 1000)
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
+      setError(
+        err instanceof RequestError
+          ? err.message
+          : 'The live run failed partway. The committed snapshot below is unaffected.',
+      )
+    } finally {
+      setRunning(false)
+    }
+  }, [])
+
+  const cancel = useCallback(() => {
+    abortRef.current?.abort()
+    setRunning(false)
+  }, [])
+
+  const data = (live ?? snapshot) as unknown as BenchmarkData
+  const { summary, classes } = data
   const matrix = summary.byClass
+  const isLive = live !== null
 
   const HEADLINE = [
     {
@@ -75,6 +153,69 @@ export function BenchmarkMatrix() {
             implementations</span>, run end to end. The controls matter: a fuzzer that flags
             everything detects everything.
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {running ? (
+              <>
+                <button
+                  type="button"
+                  onClick={cancel}
+                  className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-4 py-2 text-[13px] font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+                >
+                  Cancel the live run
+                </button>
+                <span className="font-mono text-[12px] tabular-nums text-slate-400">
+                  measuring live… {progress.done}/{progress.total} cases · {elapsed.toFixed(0)}s
+                </span>
+                <span className="h-1 w-40 overflow-hidden rounded-full bg-white/[0.06]">
+                  <span
+                    className="block h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400 transition-[width]"
+                    style={{
+                      width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%`,
+                    }}
+                  />
+                </span>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void runLive()}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-rose-500 to-amber-400 px-4 py-2 text-[13px] font-semibold text-ink-950 transition hover:brightness-110"
+                >
+                  {isLive ? 'Re-run live on this server' : 'Run live on this server'}
+                </button>
+                {isLive && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLive(null)
+                      setRunSeconds(null)
+                    }}
+                    className="text-[12px] font-medium text-slate-500 underline decoration-white/20 underline-offset-4 transition hover:text-slate-300"
+                  >
+                    Back to the committed snapshot
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          <p className="mt-3 text-[12px] leading-relaxed text-slate-500">
+            {isLive && runSeconds !== null ? (
+              <>
+                Measured live on this server · {summary.totalCases} cases · {runSeconds.toFixed(0)}s
+                · just now. Same corpus, same budgets as{' '}
+                <code className="font-mono text-slate-400">npm run benchmark</code>.
+              </>
+            ) : (
+              <>
+                Committed snapshot — regenerated from a real engine run and verified by CI on every
+                push. Press the button to measure the same suite live against this deployment.
+              </>
+            )}
+          </p>
+          {error && !running && <p className="mt-2 text-[12px] text-rose-300">{error}</p>}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
