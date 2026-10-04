@@ -36,6 +36,7 @@ import { Gallery } from './components/Gallery'
 import { Pipeline, HonestLimits } from './components/Pipeline'
 import { BenchmarkMatrix } from './components/BenchmarkMatrix'
 import { CounterexampleCard } from './components/CounterexampleCard'
+import { PhaseTrace } from './components/PhaseTrace'
 import { MutationPanel } from './components/MutationPanel'
 import { ExplanationPanel } from './components/ExplanationPanel'
 
@@ -515,11 +516,17 @@ export default function App() {
                     {report.status === 'counterexample-found' && report.finding && (
                       <>
                         <CounterexampleCard report={report} />
+                        <PhaseTrace report={report} />
                         {report.mutationScore && <MutationPanel score={report.mutationScore} />}
                         {report.explanation && <ExplanationPanel explanation={report.explanation} />}
                       </>
                     )}
-                    {report.status === 'no-counterexample-found' && <CleanState report={report} />}
+                    {report.status === 'no-counterexample-found' && (
+                      <>
+                        <CleanState report={report} />
+                        <PhaseTrace report={report} />
+                      </>
+                    )}
                     {report.status === 'oracle-missing' && <OracleMissing report={report} />}
 
                     <SuggestedFix
@@ -681,6 +688,12 @@ function RunningState() {
           </li>
         ))}
       </ul>
+
+      <p className="mt-4 border-t border-white/[0.06] pt-3 text-[11px] leading-relaxed text-slate-600">
+        These are the stages this run passes through. They are shown in order, but the analysis is
+        one request — what each stage actually produced is reported below, with its numbers, once
+        the run finishes.
+      </p>
     </section>
   )
 }
