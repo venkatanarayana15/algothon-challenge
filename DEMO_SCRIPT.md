@@ -1,5 +1,11 @@
 # Demo video script — 2 minutes
 
+**Problem Statement: ALG-CYBER-02 — Secure the Application.**
+
+The script is built around the PS workflow judges are scoring — *identify a
+weakness, demonstrate it safely, fix it, retest to prove the fix holds* — rather
+than around the tool. Beats 2 and 3 are that workflow end to end.
+
 Record once, cleanly. The video is what a judge sees if they never click the
 link, so it has to carry the entire argument on its own.
 
@@ -10,6 +16,16 @@ link, so it has to carry the entire argument on its own.
 - Set the browser zoom to 100% and make the window full screen.
 - Have `npm start` already running.
 - Load the app, scroll to the gallery once so the fonts and images are cached.
+- **Have the fixed validator ready in the clipboard**, for Beat 3:
+
+  ```js
+  function validateQty(q) {
+    if (!Number.isInteger(q)) return "not a whole number";
+    if (q <= 0) return "must be positive";
+    if (q > 100) return "too large";
+    return null;
+  }
+  ```
 
 **Recording settings**
 
@@ -28,52 +44,77 @@ link, so it has to carry the entire argument on its own.
 > "Every developer writes tests for the inputs they imagined. The bugs live in
 > the inputs nobody did.
 >
-> This is Counterexample. You paste a function, and it finds the smallest input
-> that breaks it."
+> This is Counterexample, built for ALG-CYBER-02. You paste a function, and it
+> finds the smallest input that breaks it."
 
 **Why:** state the problem and the promise in under fifteen seconds. No preamble,
 no "hi, my name is".
 
 ---
 
-## Beat 2 — Watch it work on my own code (0:15 – 0:50)
+## Beat 2 — It finds the bypass (0:15 – 0:50)
 
-**On screen:** scroll to the editor. The `isPrime` function is already there.
+**On screen:** scroll to the editor. The `validateQty` function is already there,
+and the policy is set to **Quantity**.
 
-1. Click inside the editor. Let the caret blink for a second.
-2. Press **⌘↵**.
-3. Watch the running state. Do not talk over the whole thing — one line:
-   > "It reads the source, infers the parameter is a number, and generates inputs
-   > biased toward the boundaries rather than random ones."
-4. The counterexample card lands.
+```js
+function validateQty(q) {
+  if (q <= 0) return "must be positive";
+  if (q > 100) return "too large";
+  return null;
+}
+```
 
-5. **Hover the "reduced from" line** if it is present.
+1. Click **Options**, point at the "Hold it to a rule" dropdown, set *Quantity*.
+2. Close options. Press **⌘↵**.
+3. The counterexample card lands, badged **bypass**.
 
-> "It found `isPrime(-1)`. My function returns `true`; it should return `false`.
+> "It found `validateQty(NaN)`. The policy says reject — `NaN` is not a quantity.
+> My validator returned no error, which means it accepted it.
 >
-> Not a crash — a confidently wrong answer, on the one input I never thought to
-> test. That's the bug that survives code review, because every line is
-> individually defensible."
+> Here's why: `NaN <= 0` is false and `NaN > 100` is false, so a range check
+> written with comparisons alone waves it straight through. `true`, `null` and an
+> empty string do exactly the same thing. It's not one bug, it's a family, and the
+> input it shows me can differ each run — every one of them is real.
+>
+> And notice it never fired at anything. I told it the rule, it ran thousands of
+> inputs, and it found the one that gets through."
 
-**Why:** the counterexample is the whole product. Slow down here.
+**Why:** this is the money shot. It is a named vulnerability class with a
+one-character cause, and the tool named the kind of bug, not just the input.
 
 ---
 
-## Beat 3 — It proves the test is real (0:50 – 1:15)
+## Beat 3 — Fix it, then prove the fix holds (0:50 – 1:15)
 
-**On screen:** scroll to the mutation panel.
+**On screen:** select all in the editor and paste the fixed validator. Press **⌘↵**.
 
-> "But finding an input isn't enough. What if that input doesn't actually test
-> anything?
+The result is **no counterexample found**.
+
+> "So now the fix: check the type before the range. `Number.isInteger(q)` first.
 >
-> So we inject six classic operator faults into the code — flip a loop bound,
-> flip a comparison — and check whether this counterexample still catches them.
+> Run it again. No counterexample. That's the part people skip — a fix that looks
+> right isn't a fix until you've tried to break it again.
 >
-> Two of two killed. That means the test is genuinely exercising the logic, not
-> just tripping over a side effect."
+> And the reason I trust that 'no counterexample' here is that it isn't the
+> default answer. This same tool reports zero false positives against nine
+> deliberately correct implementations — it stays quiet when it should."
 
-**Why:** this is the beat that separates a real tool from a party trick. Most
-hackathon demos never get here. Judges remember it.
+**Optional, if time allows — hover the mutation panel:**
+
+> "It also injects six classic operator faults into the code and checks whether
+> this counterexample still catches them. Two of two killed, so the test is
+> genuinely exercising the logic rather than tripping a side effect."
+
+**Why:** identify → fix → retest is the exact PS workflow, and retesting is a
+scored must-have. Almost nobody demonstrates it. The false-positive beat is what
+makes "no counterexample" mean something.
+
+**Verified before recording.** Both halves of this beat were run against the live
+engine: the vulnerable validator reports `validateQty(NaN)` as a `bypass` classed
+`validation-bypass`, and the fixed validator above returns `no-counterexample-found`
+on three consecutive runs. If your recording disagrees with that, something is wrong
+with the deployment, not with the script.
 
 ---
 
@@ -134,9 +175,10 @@ scrolling. Precision reads as competence.
 
 **On screen:** scroll back to the top. Hero in frame.
 
-> "Counterexample. Paste your code, get the input that breaks it. No signup, no
-> upload, no API key — the link's in the submission, and the gallery's all
-> reproducible from the repo."
+> "Counterexample, for ALG-CYBER-02. Paste your validator, get the input that
+> gets through it — then fix it and prove the fix holds. No signup, no upload, no
+> API key — the link's in the submission, and every result is reproducible from
+> the repo."
 
 **End on the hero. Hold for two seconds.**
 
@@ -147,6 +189,7 @@ scrolling. Precision reads as competence.
 - [ ] Cursor visible throughout
 - [ ] No notifications, no personal tabs, no bookmarks bar
 - [ ] ⌘↵ actually runs (test before recording)
+- [ ] Fixed validator is in the clipboard before you hit record
 - [ ] The counterexample card is fully rendered before you talk over it
 - [ ] The benchmark section has scrolled into view fully before you start
 - [ ] Under 2:05 — trim any hesitation, keep every pause
