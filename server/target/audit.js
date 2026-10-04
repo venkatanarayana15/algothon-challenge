@@ -179,6 +179,8 @@ export async function auditTarget({ budgets = 2500 } = {}) {
       title: vuln.title,
       owasp: vuln.owasp,
       subject: vuln.subject,
+      endpoint: vuln.endpoint,
+      guards: vuln.guards,
       rootCause: vuln.rootCause,
       fix: vuln.fix,
 

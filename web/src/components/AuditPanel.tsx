@@ -105,6 +105,38 @@ export function AuditPanel() {
 
       {report && !loading && (
         <>
+          <div className="panel-raised mb-6 overflow-hidden">
+            <div className="border-b border-white/[0.06] bg-ink-850/60 px-5 py-3.5">
+              <p className="label mb-1">the application under audit</p>
+              <h3 className="text-sm font-semibold text-white">
+                Demo shop — cart, signup and admin routes
+              </h3>
+            </div>
+            <ul className="divide-y divide-white/[0.05]">
+              {report.vulnerabilities.map((v) => (
+                <li
+                  key={v.id}
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-5 py-2.5"
+                >
+                  <code className="font-mono text-[12px] font-semibold text-rose-300">
+                    {v.endpoint}
+                  </code>
+                  <span className="text-[12px] text-slate-400">
+                    guarded by <code className="font-mono text-slate-300">{v.subject}</code> —{' '}
+                    {v.guards}
+                  </span>
+                  <span
+                    className={`ml-auto font-mono text-[11px] ${
+                      v.status === 'FIXED_AND_VERIFIED' ? 'text-emerald-400/80' : 'text-rose-400/80'
+                    }`}
+                  >
+                    {v.status === 'FIXED_AND_VERIFIED' ? 'secured' : 'exposed'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             <Stat
               label="vulnerabilities fixed and verified"
@@ -223,6 +255,7 @@ function Finding({ finding }: { finding: AuditFinding }) {
         <div className="flex min-w-0 items-center gap-3">
           <span className="font-mono text-xs font-semibold text-slate-500">{finding.id}</span>
           <h3 className="min-w-0 truncate text-sm font-semibold text-white">{finding.title}</h3>
+          <code className="shrink-0 font-mono text-[11px] text-rose-300/90">{finding.endpoint}</code>
           <span className="chip">{finding.owasp}</span>
         </div>
         <div className="flex items-center gap-2">

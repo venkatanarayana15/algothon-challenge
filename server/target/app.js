@@ -112,6 +112,11 @@ export const VULNERABILITIES = [
     title: 'Quantity check accepts NaN',
     owasp: 'A03:2021 Injection',
     subject: 'validateQty',
+    // Where this function sits in the application. The audit is of an
+    // application, not of three loose functions, so every finding names the
+    // endpoint it leaves exposed.
+    endpoint: 'POST /cart/items',
+    guards: 'the quantity on every add-to-cart request',
     // The engine proves this one by itself: NaN passes both range guards.
     finding: 'validateQty(NaN)',
     rootCause:
@@ -137,6 +142,8 @@ export const VULNERABILITIES = [
     title: 'Password check is vulnerable to ReDoS',
     owasp: 'A05:2021 Security Misconfiguration / CWE-1333',
     subject: 'isStrongEnoughPassword',
+    endpoint: 'POST /auth/register',
+    guards: 'the password policy on every signup request',
     // Found by the engine's non-termination detection, not by reading the regex.
     finding: 'isStrongEnoughPassword(<long run of one character>)',
     rootCause:
@@ -162,6 +169,8 @@ export const VULNERABILITIES = [
     title: 'Inverted comparison in the access-control check',
     owasp: 'A01:2021 Broken Access Control',
     subject: 'authorize',
+    endpoint: 'GET /admin/*',
+    guards: 'every admin route, by role and privilege level',
     finding: 'authorize("user", 0)',
     rootCause:
       'The guard reads level <= 1 where it means level >= 1. The operator was flipped, and because ' +

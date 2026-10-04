@@ -156,6 +156,10 @@ export interface AuditFinding {
   title: string
   owasp: string
   subject: string
+  /** The route this function guards, e.g. POST /cart/items. */
+  endpoint: string
+  /** What the guard protects, in one phrase. */
+  guards: string
   rootCause: string
   fix: string
   detectedByEngine: boolean
