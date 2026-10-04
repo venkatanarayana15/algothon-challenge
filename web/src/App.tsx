@@ -30,6 +30,7 @@ import { RunTrail } from './components/RunTrail'
 import { suggestFix } from './lib/fix'
 import { Hero } from './components/Hero'
 import { AuditPanel } from './components/AuditPanel'
+import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { Editor } from './components/Editor'
 import { Gallery } from './components/Gallery'
 import { Pipeline, HonestLimits } from './components/Pipeline'
@@ -100,6 +101,7 @@ export default function App() {
   const [isRunning, setIsRunning] = useState(false)
   const [examples, setExamples] = useState<Example[]>(SEEDED_EXAMPLES)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [health, setHealth] = useState<EngineHealth | null>(null)
   const [history, setHistory] = useState<RunRecord[]>([])
   /** Source held while an applied guard is in place, so it can be restored. */
@@ -290,6 +292,14 @@ export default function App() {
       if (event.shiftKey && !mod && event.key.toLowerCase() === 'd' && !isTypingTarget(event.target)) {
         event.preventDefault()
         void runDemo()
+        return
+      }
+      // "?" is Shift+/ on most layouts, so it arrives as key "?" with shiftKey
+      // already set. Checking the key alone is what makes it work on the
+      // layouts where it is not, without stealing it from a text field.
+      if (event.key === '?' && !isTypingTarget(event.target)) {
+        event.preventDefault()
+        setShortcutsOpen((open) => !open)
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -445,6 +455,7 @@ export default function App() {
         isRunning={isRunning}
         canRun={Boolean(code.trim())}
         onOpenPalette={() => setPaletteOpen(true)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
         onRun={() => void run()}
       />
 
@@ -525,6 +536,7 @@ export default function App() {
         actions={paletteActions}
         onClose={() => setPaletteOpen(false)}
       />
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
     </div>
   )
 }

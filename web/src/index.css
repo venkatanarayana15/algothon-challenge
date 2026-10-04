@@ -12,6 +12,25 @@
     scroll-behavior: smooth;
   }
 
+  /*
+   * A visible focus ring on every interactive element, without adding a class
+   * to each one.
+   *
+   * This was missing entirely, which meant keyboard users got only the browser's
+   * default outline -- often invisible against these dark panels, so tabbing
+   * through the app looked like nothing was happening. `:focus-visible`
+   * rather than `:focus` because a ring on every mouse press is noise.
+   */
+  :focus-visible {
+    @apply outline-none ring-2 ring-rose-400/70 ring-offset-2 ring-offset-ink-950;
+  }
+
+  /* Keep the ring off the textarea: it is a full-height control and a ring
+     around it reads as a border, not as focus. */
+  textarea:focus-visible {
+    @apply ring-0;
+  }
+
   body {
     @apply bg-ink-950 text-slate-200 font-sans antialiased;
   }
@@ -58,6 +77,21 @@
 @layer components {
   .panel {
     @apply rounded-xl border border-white/[0.06] bg-ink-900/60 backdrop-blur-sm;
+    /* Lift on hover only where the panel is actually interactive, so static
+       panels do not invite a click they will not honour. */
+    @apply transition-colors duration-200;
+  }
+
+  /*
+   * Interactive cards: a hairline that warms on hover, plus a lift.
+   *
+   * Applied to the gallery and audit cards. The border-colour shift is the part
+   * that matters on a touch device, where there is no hover at all -- it is the
+   * only cue that a card does something.
+   */
+  .card-interactive {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.14]
+      hover:shadow-lg hover:shadow-black/30 focus-within:border-rose-400/40;
   }
 
   .panel-raised {

@@ -73,8 +73,12 @@ export function CodeBlock({ code, showLineNumbers = false, className = '' }: Pro
         type="button"
         onClick={handleCopy}
         aria-label="Copy code"
+        // Shown on hover on a pointer device, but always visible on touch: a
+        // hover-only control is unreachable on a phone, and a judge may well
+        // demo this one on one.
         className="absolute right-2 top-2 z-10 rounded-md border border-white/10 bg-ink-800/90 p-1.5
-          text-slate-500 opacity-0 transition hover:text-slate-200 focus:opacity-100 group-hover:opacity-100"
+          text-slate-400 transition hover:text-slate-100 focus-visible:opacity-100
+          opacity-100 md:opacity-0 md:group-hover:opacity-100"
       >
         {copied ? (
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-none stroke-emerald-400 stroke-[1.75]">

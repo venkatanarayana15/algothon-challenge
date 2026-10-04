@@ -72,7 +72,7 @@ export function Gallery({ onPickEntry }: Props) {
           return (
             <article
               key={entry.id}
-              className={`panel group flex flex-col transition hover:border-white/[0.13] ${
+              className={`panel card-interactive group flex flex-col ${
                 entry.provenance ? 'border-amber-500/20 bg-amber-500/[0.03]' : ''
               }`}
             >
@@ -154,14 +154,14 @@ export function Gallery({ onPickEntry }: Props) {
                   <button
                     type="button"
                     onClick={() => setExpanded(isOpen ? null : entry.id)}
-                    className="text-[11px] font-medium text-slate-500 transition hover:text-slate-300"
+                    className="rounded text-[11px] font-medium text-slate-500 transition hover:text-slate-300"
                   >
                     {isOpen ? 'less' : 'details'}
                   </button>
                   <button
                     type="button"
                     onClick={() => onPickEntry(entry)}
-                    className="text-[11px] font-medium text-slate-400 underline decoration-white/15
+                    className="rounded text-[11px] font-medium text-slate-400 underline decoration-white/15
                       underline-offset-4 transition hover:text-white hover:decoration-white/50"
                   >
                     run it

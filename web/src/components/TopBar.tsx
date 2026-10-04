@@ -9,6 +9,7 @@ interface Props {
   canRun: boolean
   onOpenPalette: () => void
   onRun: () => void
+  onOpenShortcuts: () => void
 }
 
 /**
@@ -16,7 +17,15 @@ interface Props {
  * while scrolling: where am I, is the engine up, and how do I run this thing.
  * The progress hairline is the cheapest possible answer to "how much is left".
  */
-export function TopBar({ progress, health, isRunning, canRun, onOpenPalette, onRun }: Props) {
+export function TopBar({
+  progress,
+  health,
+  isRunning,
+  canRun,
+  onOpenPalette,
+  onOpenShortcuts,
+  onRun,
+}: Props) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-md">
       <div className="flex h-14 items-center gap-2 px-3 sm:px-4 lg:px-6">
@@ -61,6 +70,21 @@ export function TopBar({ progress, health, isRunning, canRun, onOpenPalette, onR
             <kbd className="hidden rounded border border-white/[0.12] bg-ink-900 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 sm:inline">
               ⌘K
             </kbd>
+          </button>
+
+          {/* Discoverability for the shortcut sheet. A shortcut nobody can find
+              is the same as a shortcut that does not exist, so it gets a button
+              rather than only a key. */}
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            data-action="shortcuts"
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts"
+            className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1.5 text-xs
+              text-slate-500 transition hover:border-white/15 hover:text-slate-200"
+          >
+            <kbd className="font-mono text-[11px] leading-none">?</kbd>
           </button>
 
           <button
