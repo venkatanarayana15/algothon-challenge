@@ -36,6 +36,7 @@ import { Gallery } from './components/Gallery'
 import { Pipeline, HonestLimits } from './components/Pipeline'
 import { BenchmarkMatrix } from './components/BenchmarkMatrix'
 import { CounterexampleCard } from './components/CounterexampleCard'
+import { ResultSheet } from './components/ResultSheet'
 import { PhaseTrace } from './components/PhaseTrace'
 import { MutationPanel } from './components/MutationPanel'
 import { ExplanationPanel } from './components/ExplanationPanel'
@@ -119,6 +120,8 @@ export default function App() {
   const [previousCode, setPreviousCode] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  /** The short result sheet, shown when a run the visitor asked for finishes. */
+  const [sheetOpen, setSheetOpen] = useState(false)
   const autoRanRef = useRef(false)
   const runIdRef = useRef(1)
 
@@ -203,6 +206,11 @@ export default function App() {
         requestAnimationFrame(() => {
           resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         })
+        // Someone who pressed Analyse is waiting for an answer, so the short
+        // version arrives as a sheet over the page they were on. Retests after
+        // applying a fix stay inline: the interesting thing there is the
+        // comparison against the previous run, which needs the page.
+        if (origin === 'manual') setSheetOpen(true)
       } catch (err) {
         if ((err as Error).name === 'AbortError') return
         setError(
@@ -568,6 +576,24 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
       />
       {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
+      {sheetOpen && report && (
+        <ResultSheet
+          report={report}
+          fix={fix}
+          fixApplied={previousCode !== null}
+          onClose={() => setSheetOpen(false)}
+          onApplyFix={() => {
+            setSheetOpen(false)
+            void applyFix()
+          }}
+          onSeeDetail={() => {
+            setSheetOpen(false)
+            requestAnimationFrame(() => {
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            })
+          }}
+        />
+      )}
     </div>
   )
 }
