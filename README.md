@@ -2,11 +2,15 @@
 
 **Paste your code. Get the smallest input that breaks it.**
 
-[![CI](https://github.com/your-org/counterexample/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/counterexample/actions/workflows/ci.yml)
+<!-- ALGOTHON'26 · Problem Statement ALG-CYBER-02 — Secure the Application -->
+
+[![CI](./actions/workflows/ci.yml/badge.svg)](./actions/workflows/ci.yml)
 
 Counterexample is an adversarial tester for JavaScript functions. You paste a
-function; it writes a second, independent implementation, throws thousands of
-generated inputs at both, and hands you the smallest input where they disagree.
+function; it runs a second, independent implementation alongside yours over
+thousands of generated inputs, and hands you the smallest input where the two
+disagree. The second implementation ships with the tool for the common cases —
+a model key is optional, not required.
 
 ```js
 function isPrime(n) {
@@ -74,7 +78,7 @@ defensible. The bug only exists in the composition.
 | **Parse** | An `acorn` AST walk locates the target function and infers what each parameter actually is. |
 | **Infer** | Types come from evidence in your source: method calls, `.length` reads, index accesses, arithmetic, comparisons, `Set`/`Map` construction, JSDoc. Bounds are read off your own comparison operators. |
 | **Generate** | Biased input generation, not random fuzzing. Boundary values a human forgets — `0`, `1`, empty, single-element, all-equal, sorted, reversed, duplicated, `MAX_SAFE_INTEGER`, unicode — plus the exact values implied by your loop bounds. |
-| **Oracle** | Fourteen hand-written reference implementations ship in the box, covering common problem shapes. Anything else gets an independent brute-force implementation generated for the run. |
+| **Oracle** | Fourteen hand-written reference implementations ship in the box, covering common problem shapes. Validators are checked against an explicit policy instead of an output — see below. Anything outside the library is only covered when a model key is configured; without one we report crashes and hangs rather than guessing at an answer. |
 | **Differentially fuzz** | Both implementations run on every input under a per-call timeout, catching four distinct failure classes: wrong answers, exceptions, non-termination, and non-determinism. |
 | **Shrink** | Delta debugging (ddmin) removes chunks of the failing input; a value ladder then walks from exotic to plain, keeping the plainest value that still reproduces. |
 | **Classify** | The *kind* of mistake is named from the shape of the counterexample and your source, with the fix to look at. Heuristic, and labelled as such in the UI. |
@@ -94,7 +98,7 @@ implementations**, run end to end (`npm run benchmark`):
 | Bug-class naming | 70% — heuristic, reported as such |
 | Median analysis | ~2.2s over 75,000 generated inputs |
 
-Per class, detection ranges from 67% to 100% across all twelve classes. The one
+Per class, detection ranges from 67% to 100% across all thirteen classes. The one
 miss is `max-with-nan`, where a `>=` comparison silently `NaN`-discards the
 maximum — it is left in the reported table rather than removed.
 
@@ -144,18 +148,58 @@ npm start          # single process, serves api + web on :3001
 
 npm run selftest   # all 13 seeded examples produce a counterexample
 npm run benchmark  # detection rate, false positives, class accuracy
+npm run check:data # fails if web/src/data is out of date
 ```
 
 Both verification commands print a table and exit non-zero on failure.
 
 `.github/workflows/ci.yml` runs typecheck, the self-test, the benchmark, the
 build, and a staleness check on the generated data on every push. That last step
-regenerates `web/src/data/` and fails if the diff is non-empty, so the site can
-never quietly show a finding the engine no longer produces.
+regenerates `web/src/data/` and fails if anything reproducible moved, so the site
+can never quietly show a finding the engine no longer produces.
 
-Both generated files are byte-for-byte deterministic. Wall-clock timing and
-input counts are printed to the console but deliberately excluded from the JSON,
-because they vary run to run and would otherwise churn the file on every build.
+Both generated files are stable enough to check in, but they are not byte-for-byte
+reproducible, and the staleness check does not pretend otherwise. It compares the
+fields an honest run can reproduce — every rate, every verdict, every classification
+— and explicitly excludes three that vary by design: wall-clock timing, input counts,
+and the observation fields of the deliberately non-deterministic benchmark case,
+whose subject injects `Math.random` and so returns a different minimal input on
+each run. Anything else moving fails the build.
+
+## Finding a validation bypass
+
+A validator is the security case, and it needs a different comparison. A validator
+does not have a right answer, it has a verdict, so there is no reference "error
+message for input q" to disagree with. Counterexample instead takes the *policy* —
+the rule you meant to enforce — and reports any input where your validator's
+verdict disagrees with it:
+
+```js
+function validateQty(q) {
+  if (q <= 0) return "must be positive";
+  if (q > 100) return "too large";
+  return null;
+}
+```
+
+```
+counterexample   validateQty(NaN)
+policy           reject
+your validator   accept
+```
+
+`NaN <= 0` is false and `NaN > 100` is false, so the range check passes it.
+`true`, `null` and `""` do the same thing. There is not one bug here but a family
+of them, which is why the reported input can differ between runs; every one of them
+is a genuine bypass. A correctly written validator produces no finding at all,
+which is the property that matters — a security tool that flags everything is worse
+than no tool.
+
+The policy is stated explicitly rather than inferred from your source. In
+`if (q <= 0) return "must be positive"` those comparisons are *rejection* guards,
+so reading them as acceptance bounds inverts the rule and would produce a reference
+that accuses correct validators. Guessing a security policy from the code it is
+meant to police is the wrong direction of trust.
 
 ### Setting a model key (optional)
 
@@ -195,6 +239,9 @@ building it.
   a guarantee. The UI says so explicitly rather than showing a green checkmark.
 - **Single-file JavaScript.** No modules, no multi-file projects, no other
   languages.
+- **Validator policies are numeric ranges.** Bypass detection covers range and type
+  checks, which is where the coercion bugs live. Regex, string-shape and
+  cross-field rules need a policy written for them; we do not infer one.
 - **Type inference reads your source.** Code that hides its inputs —
   reflection, dynamic dispatch, network data — is inferred poorly. We always
   display what we inferred so you can check it.

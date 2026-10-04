@@ -1,12 +1,34 @@
 # ALGOTHON'26 — Deep Strategy for Winning
 
+> **Internal planning document. Superseded — read `plan.md` instead.**
+>
+> This was written before the problem statements were published and before the
+> product was built, so parts of it describe a system that does not exist. It is
+> kept because the reasoning is real, but the factual claims about the shipped
+> product have been corrected where they were wrong.
+>
+> What changed after this was written:
+>
+> - The organiser published **12 problem statements with IDs**. We build against
+>   **ALG-CYBER-02, Secure the Application**. See `plan.md`.
+> - Analysis runs **server-side in a hardened `node:vm`**, not in the browser. There
+>   is no WASM build and no Pyodide.
+> - The oracles are a **hand-written library of 14** shipped in the source, not a
+>   disk cache of about 20.
+> - **No unified-diff fixer was built.** Explanations are prose plus a class-level
+>   recommendation.
+> - Only **JavaScript** is supported, never Python.
+> - Benchmarked: **95% detection, 0% false positives** over 21 defects and 9
+>   correct controls. The 300-registration figure is an organiser claim, not a
+>   verified number.
+
 ## 0. What kind of competition this actually is (read this first)
 
 Facts extracted from the case file + public listing:
 
 | Property | Value | Strategic consequence |
 |---|---|---|
-| Theme | **None published.** "Build your own innovative project." Challenge/theme only announced on the day via WhatsApp. | You cannot pre-commit to a niche. The idea must survive an unknown theme, or be pivotable in ≤2h. |
+| Theme | ~~None published.~~ **Superseded:** 12 problem statements were published with unique PS IDs across 6 domains. | You pick one PS ID and build against it. We picked ALG-CYBER-02. |
 | Participants | **300+ registered** (organizer's own post), mostly students/beginners. | The bar is NOT "most technically advanced". The bar is "clearly better than 300 chatbot wrappers and half-broken CRUD apps". |
 | Format | 12h, online, solo or team of 2, one submission. | Team of 2 is strictly better if available — halves the build, adds a second brain. |
 | Judges | Algoxilla organizers (algo-themed student/dev community). | They reward **algorithmic depth + execution**. Avoid generic AI wrappers. |
@@ -40,7 +62,7 @@ I generated and scored candidates on: 15-second demo impact, technical depth, or
 ### SHORTLISTED (ranked)
 
 **#1 — Adversarial Test-Case Hunter for code/DSA solutions** ⭐ recommended
-Paste any Python function → the tool *finds a concrete input that breaks it*, with a minimal counterexample, in-browser, in ~15 seconds.
+Paste any JavaScript function → the tool *finds a concrete input that breaks it*, with a minimal counterexample, server-side, in ~15 seconds.
 - Demo impact: **10/10.** The judge pastes *their own* code and watches it get killed. Self-referential, personal, addictive.
 - Originality: **10/10.** Essentially nobody builds this at hackathons.
 - Fit to Algoxilla (algo community): **perfect.**
@@ -85,7 +107,7 @@ Tagline: **"Paste your code. We will find the input that breaks it."**
 |---|---|
 | Problem understanding | Names the *real* root cause: not "no tests" but "no one knows which input matters". Quantified. |
 | Functionality | One action → a verified, reproducible failing input + fix. Depth, not breadth. |
-| Technical implementation | AST-driven input inference, property-based fuzzing, **differential testing** against an independent oracle, **delta-debugging shrinker**, mutation-testing score, sandboxed in-browser execution (WASM). Real, defensible engineering. |
+| Technical implementation | AST-driven input inference, property-based fuzzing, **differential testing** against an independent oracle, **delta-debugging shrinker**, mutation-testing score, hardened server-side `node:vm` sandbox. Real, defensible engineering. |
 | Originality | Test-oracle synthesis + counterexample minimization as a *product* — novel to this audience. |
 | Usability | Paste → result in 15s. No signup, no upload, no key. Best-in-class zero friction. |
 | Execution | Deployed static site, deterministic core, fallback when LLM is down. |
@@ -102,10 +124,10 @@ Pipeline (per submission):
 
 1. **Parse** — `acorn`: locate the target function, infer parameter types and constraints from JSDoc annotations, defaults, and usage.
 2. **Input schema inference** — build a generator: numeric bounds from comparisons and literals found in the code (`n-1`, `0`, `MAX`), list sizes, strings, and a bias toward "awkward" values: `0`, `1`, `-1`, empty array, single element, duplicates, sorted/reverse-sorted, all-equal, `MAX_SAFE_INTEGER`, unicode. This step alone is where most of the "smart" is, and it is deterministic and fast.
-3. **Oracle synthesis** — ask a free-tier model (Google AI Studio / Groq / OpenRouter, **cached and optional**) to write an *independent* brute-force/slow-but-obviously-correct implementation of the same spec. Cache on disk and ship ~20 pre-cached oracles for common problem classes (sort, reverse, dedupe, second-largest, palindrome, matrix rotate, fib, gcd, isPrime, two-sum, range sum, etc.) so the demo works with **zero network**.
+3. **Oracle synthesis** — ask a free-tier model (Google AI Studio / Groq / OpenRouter, **optional**) to write an *independent* brute-force/slow-but-obviously-correct implementation of the same spec. Fourteen hand-written reference oracles ship in the source for common problem classes (reverse, sum, max, second-largest, palindrome, rotate, count vowels, binary search, dedupe, flatten, fib, gcd, isPrime, sorted) so the demo works with **zero network** and zero key.
 4. **Differential fuzzing** — run both implementations over 5k–50k generated inputs in the sandboxed worker with per-input timeouts. Catch: wrong answers, exceptions, non-termination, and **non-determinism** (same input, two runs, different output). Each category is a distinct, named finding.
 5. **Shrink** — delta debugging (ddmin-style) to reduce the failing input to a minimal one, then render it as the tightest literal call: `f([], 0)`.
-6. **Explain & fix** — LLM turn: given the original code, the oracle, and the minimal counterexample, explain the root cause in 2 sentences and emit a unified diff of the fix. Deterministic fallback: static heuristics (e.g. missing empty-input guard → "add a base case").
+6. **Explain & fix** — LLM turn: given the original code, the oracle, and the minimal counterexample, explain the root cause in 2 sentences. Deterministic fallback: static heuristics keyed to the named bug class (e.g. missing empty-input guard → "add a base case"). No patch is generated.
 7. **Mutation score** — flip a few operator mutants of the user's function and confirm the reported counterexample family actually kills them. This is the "did you really test it" proof, and it is the detail that signals research-level seriousness to a technical judge.
 
 **Killer feature (the unforgettable moment):** a pre-seeded gallery of 8 buggy solutions across difficulty levels, one of which reproduces a **real historical bug from a well-known open-source project or a famous LeetCode editorial pitfall**. Caption: *"This is not a synthetic demo — this is a genuine edge case our tool found."* Validated claims beat claimed capabilities.
@@ -131,7 +153,7 @@ Non-negotiable rule: **a deployed, working demo at 4:00 PM beats a better demo a
 | 13:15–15:00 | Shrinker (ddmin), timeout handling, exception capture, multi-category findings. | Minimal counterexample `<= 3` lines for every seeded bug. |
 | 15:00–16:00 | **CHECKPOINT 1 — deploy v0** to Vercel with plain styling. Send the link to one friend on another network. | Public URL works on mobile. |
 | 16:00–18:00 | The real UI: side-by-side code panes, animated "executing 24,193 inputs", counterexample card, fix diff, gallery. | Looks designed, not scaffolded. |
-| 18:00–19:00 | LLM layer: oracle synthesis, explanation, fix. Cache everything. Graceful degradation if no key. | Works offline with pre-cached oracles. |
+| 18:00–19:00 | LLM layer: oracle synthesis, explanation. Graceful degradation if no key. | Works offline with the 14 shipped oracles. |
 | 19:00–20:30 | Seed gallery (8 bugs, 1 real-world provenance), mutation score, permalinks, error states, empty states, mobile pass. | Zero dead buttons. |
 | 20:30–21:30 | **CHECKPOINT 2 — freeze features.** README, architecture diagram, 2-min demo video (screen-record a real run), screenshots. | Submission text drafted. |
 | 21:30–22:00 | Submit. Verify every link opens incognito. Buffer for the Unstop form. | Submitted before 9:40 PM. |
@@ -163,7 +185,7 @@ Assemble **before 9:00 PM**, as a single artifact:
 |---|---|---|
 | Theme announced on the day is narrow and mismatched | Medium | Idea must be taggable as AI/dev-tools/education. If theme is India/social-impact → pivot to candidate #2 using the *same UI shell* (engine work is reusable as a demo inside it). Decide by 11:00 AM. |
 | Analysis server crashes on a malicious/pathological submission | Medium | Per-request worker with wall-clock kill; freeze intrinsics; static seeded gallery keeps the frontend meaningful if the API dies. |
-| Free LLM tier rate-limits at judging time | High | Deterministic core requires **no** LLM. Ship pre-cached oracles + heuristics. LLM only *enhances*. |
+| Free LLM tier rate-limits at judging time | High | Deterministic core requires **no** LLM. Fourteen oracles ship in the source, plus heuristics. LLM only *enhances*. |
 | Judge's machine / network is slow or offline | Medium | First paint shows the seeded gallery result with no execution needed. |
 | You run out of time at 8 PM with a half-UI | High | Two deploy checkpoints. Cut list in §2.4 pre-agreed and pre-delegated. |
 | Judges skim and don't read | High | The 15-second GIF/video in the submission + a landing page that animates the counterexample being found. |
