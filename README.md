@@ -138,8 +138,11 @@ that disagrees with reality is worse than no label at all.
 
 `npm run audit` audits a deliberately vulnerable application: three findings,
 each detected, patched, retested, and checked against legitimate behaviour.
-All three reach `FIXED_AND_VERIFIED`, with **12/12 legitimate cases passing
-before and after** and nothing broken by the fixes.
+All three reach `FIXED_AND_VERIFIED`, with **13/13 legitimate cases passing
+after the fixes** and nothing broken by them. One of those 13 is a level-2 user
+that the inverted access-control check refused: it fails on the vulnerable code
+and passes on the fixed code, which is the point — it shows the fix restored
+access rather than merely changing behaviour.
 
 | Finding | Attack | Before | After |
 |---|---|---|---|
@@ -159,14 +162,15 @@ node --test security-regression.test.mjs
 ```
 
 It is a standard `node:test` suite — nothing to install — with 3 finding tests
-and 12 legitimate-behaviour tests. **It asserts the fixed behaviour, so it fails
+and 13 legitimate-behaviour tests. **It asserts the fixed behaviour, so it fails
 against the vulnerable version**, and `npm run verify:regression-test` proves
 both halves by swapping the fixes back out:
 
 ```
 ok   patched source: 15 passing
 ok   vulnerable source: 3 failing (one per finding)
-ok   all 12 legitimate-behaviour tests stay green against vulnerable code
+ok   3 finding tests fail and 1 access case the fix restores also fails on vulnerable code
+ok   the other 12 legitimate-behaviour tests stay green against vulnerable code
 ok   the committed suite matches what the audit generates today
 ```
 

@@ -26,6 +26,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LEGITIMATE_CASES, VULNERABILITIES } from '../server/target/app.js'
+import { auditTarget } from '../server/target/audit.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const generated = path.join(root, 'security-regression.test.mjs')
@@ -94,22 +95,45 @@ assert.ok(
 )
 console.log(`ok   vulnerable source: ${vulnerableCounts.fail} failing (one per finding)`)
 
-// The legitimate-behaviour tests must STILL pass against vulnerable code: they
-// describe behaviour the bugs never touched, so if they went red the generated
-// file would be asserting the wrong thing.
-// The legitimate-behaviour tests must STILL pass against vulnerable code: they
+// Most legitimate-behaviour tests must STILL pass against vulnerable code: they
 // describe behaviour the bugs never touched, so if they went red the generated
 // file would be asserting the wrong thing.
 //
-// Asserted on the count rather than by matching output lines: the summary is
-// stable, whereas the per-test reporter format differs between Node versions.
+// The exception is a case the vulnerability itself broke. `auth-valid-user-level2`
+// is an ordinary level-2 user that the inverted access-control predicate refuses,
+// so it is expected to fail before the fix and pass after it -- which is exactly
+// what makes it evidence that the fix restored access rather than merely changing
+// behaviour. Those are read from the audit's own `newlyPassingAfterFix` rather than
+// hardcoded here, so adding such a case cannot silently break this check, and
+// removing one cannot leave it passing for the wrong reason.
+//
+// Asserted on counts rather than by matching output lines: the summary is stable,
+// whereas the per-test reporter format differs between Node versions.
 const legitTotal = LEGITIMATE_CASES.length
+// One audit, shared with the staleness check at the bottom of this file. Running
+// a second one would double several minutes of deliberate ReDoS CPU for a value
+// that cannot differ between two runs of the same code.
+const auditReport = await auditTarget({ budgets: 2500 })
+const restoredByFix = auditReport.regression.newlyPassingAfterFix
+const expectedGreenAgainstVulnerable = legitTotal - restoredByFix.length
+
+assert.equal(
+  restoredByFix.length + VULNERABILITIES.length,
+  vulnerableCounts.fail,
+  `expected ${VULNERABILITIES.length} finding failures plus ${restoredByFix.length} case(s) the fix restores to fail against vulnerable code, got ${vulnerableCounts.fail}`,
+)
+console.log(
+  `ok   ${VULNERABILITIES.length} finding tests fail and ${restoredByFix.length} access case(s) the fix restores also fail on vulnerable code`,
+)
+
 assert.equal(
   vulnerableCounts.pass,
-  legitTotal,
-  `expected all ${legitTotal} legitimate-behaviour tests to pass against vulnerable code, got ${vulnerableCounts.pass}`,
+  expectedGreenAgainstVulnerable,
+  `expected ${expectedGreenAgainstVulnerable} of ${legitTotal} legitimate-behaviour tests to pass against vulnerable code (${restoredByFix.length} are expected to be red until fixed), got ${vulnerableCounts.pass}`,
 )
-console.log(`ok   all ${legitTotal} legitimate-behaviour tests stay green against vulnerable code`)
+console.log(
+  `ok   the other ${expectedGreenAgainstVulnerable} legitimate-behaviour tests stay green against vulnerable code`,
+)
 
 console.log('\nThe generated suite is a genuine regression test: red on the bug, green on the fix.')
 
@@ -123,8 +147,7 @@ console.log('\nThe generated suite is a genuine regression test: red on the bug,
 // This is only meaningful because the generator emits no wall-clock timings --
 // it states verdicts, not measured milliseconds -- so the output is byte-stable.
 const { buildRegressionTest } = await import('../server/target/regression-test.js')
-const { auditTarget } = await import('../server/target/audit.js')
-const regenerated = buildRegressionTest(await auditTarget({ budgets: 2500 })).contents
+const regenerated = buildRegressionTest(auditReport).contents
 if (regenerated !== fs.readFileSync(generated, 'utf8')) {
   console.error(
     'FAIL  security-regression.test.mjs is out of date.\n' +
