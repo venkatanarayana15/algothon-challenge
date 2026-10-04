@@ -1,0 +1,67 @@
+import type { AnalysisReport, ApiError, Example } from '../types'
+
+export interface AnalyzeRequest {
+  code: string
+  functionName?: string
+  spec?: string
+  oracleCode?: string
+  oracleSignature?: string
+  seed?: number
+}
+
+export class RequestError extends Error {
+  kind?: string
+  constructor(message: string, kind?: string) {
+    super(message)
+    this.name = 'RequestError'
+    this.kind = kind
+  }
+}
+
+async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal,
+    })
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw err
+    throw new RequestError(
+      'Could not reach the analysis server. It may be restarting — try again in a few seconds.',
+      'network',
+    )
+  }
+
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    throw new RequestError('The server returned an unreadable response.', 'protocol')
+  }
+
+  if (!response.ok) {
+    const error = payload as ApiError
+    throw new RequestError(error?.error ?? 'The analysis failed.', error?.kind)
+  }
+  return payload as T
+}
+
+export function analyze(request: AnalyzeRequest, signal?: AbortSignal) {
+  return post<AnalysisReport>('/api/analyze', request, signal)
+}
+
+export async function fetchExamples(signal?: AbortSignal): Promise<Example[]> {
+  const response = await fetch('/api/examples', { signal })
+  if (!response.ok) throw new RequestError('Could not load examples.', 'network')
+  const payload = (await response.json()) as { examples: Example[] }
+  return payload.examples
+}
+
+export async function fetchHealth(signal?: AbortSignal) {
+  const response = await fetch('/api/health', { signal })
+  if (!response.ok) throw new RequestError('unhealthy', 'network')
+  return (await response.json()) as { ok: boolean; llm: string | null; uptimeSeconds: number }
+}

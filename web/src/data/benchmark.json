@@ -1,0 +1,417 @@
+{
+  "summary": {
+    "totalCases": 30,
+    "bugCases": 21,
+    "controlCases": 9,
+    "detected": 20,
+    "missed": [
+      "max-with-nan"
+    ],
+    "falsePositives": [],
+    "detectionRate": 0.9523809523809523,
+    "falsePositiveRate": 0,
+    "classAccuracy": 0.7,
+    "byClass": [
+      {
+        "class": "duplicates-ignored",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "empty-input",
+        "total": 3,
+        "detected": 3,
+        "named": 2,
+        "detectionRate": 1
+      },
+      {
+        "class": "empty-sentinel",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "missing-base-case",
+        "total": 2,
+        "detected": 2,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "modulo-sign",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "negative-domain",
+        "total": 2,
+        "detected": 2,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "non-determinism",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "non-finite",
+        "total": 3,
+        "detected": 2,
+        "named": 0,
+        "detectionRate": 0.6666666666666666
+      },
+      {
+        "class": "non-termination",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "off-by-one",
+        "total": 3,
+        "detected": 3,
+        "named": 2,
+        "detectionRate": 1
+      },
+      {
+        "class": "ordering-contract",
+        "total": 1,
+        "detected": 1,
+        "named": 1,
+        "detectionRate": 1
+      },
+      {
+        "class": "wrong-comparison",
+        "total": 2,
+        "detected": 2,
+        "named": 2,
+        "detectionRate": 1
+      }
+    ]
+  },
+  "classes": {
+    "duplicates-ignored": "Duplicates ignored",
+    "empty-input": "Empty input",
+    "empty-sentinel": "Uninitialised sentinel",
+    "missing-base-case": "Missing base case",
+    "modulo-sign": "Modulo on negatives",
+    "negative-domain": "Negative domain",
+    "non-determinism": "Non-determinism",
+    "non-finite": "NaN / Infinity",
+    "non-termination": "Non-termination",
+    "off-by-one": "Off-by-one bounds",
+    "ordering-contract": "Ordering contract",
+    "wrong-comparison": "Inverted comparison"
+  },
+  "rows": [
+    {
+      "id": "abs-missing",
+      "expect": "bug",
+      "truth": "negative-domain",
+      "predicted": "unknown",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "negate(\"undefined\")",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "control-binarysearch",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-dedupe",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-fib",
+      "expect": "bug",
+      "truth": "non-finite",
+      "predicted": "unknown",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "correctFib(true)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "control-gcd",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-isprime",
+      "expect": "bug",
+      "truth": "non-termination",
+      "predicted": "non-termination",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "correctIsPrime(Infinity)",
+      "kind": "timeout"
+    },
+    {
+      "id": "control-palindrome",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-rotate",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-secondlargest",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-sorted",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-sum",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "control-vowels",
+      "expect": "correct",
+      "truth": "none",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "dedupe-sorts",
+      "expect": "bug",
+      "truth": "ordering-contract",
+      "predicted": "ordering-contract",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "uniq([1, 0])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "fib-incomplete-base",
+      "expect": "bug",
+      "truth": "missing-base-case",
+      "predicted": "missing-base-case",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "fib(-1)",
+      "kind": "threw"
+    },
+    {
+      "id": "first-element-empty",
+      "expect": "bug",
+      "truth": "empty-input",
+      "predicted": "unknown",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "lastChar(1)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "first-off-by-one",
+      "expect": "bug",
+      "truth": "off-by-one",
+      "predicted": "empty-input",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "indexOfFirst([], true)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "gcd-missing-zero",
+      "expect": "bug",
+      "truth": "missing-base-case",
+      "predicted": "unknown",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "gcd(0, 1)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "gcd-negatives",
+      "expect": "bug",
+      "truth": "negative-domain",
+      "predicted": "negative-domain",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "greatestCommonDivisor(-1, 0)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "max-off-by-one",
+      "expect": "bug",
+      "truth": "off-by-one",
+      "predicted": "off-by-one",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "largest(\"hello\")",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "max-sentinel-leak",
+      "expect": "bug",
+      "truth": "empty-sentinel",
+      "predicted": "empty-sentinel",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "top([])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "max-with-nan",
+      "expect": "bug",
+      "truth": "non-finite",
+      "predicted": "none",
+      "found": false,
+      "correctPrediction": false,
+      "counterexample": null,
+      "kind": null
+    },
+    {
+      "id": "mean-empty",
+      "expect": "bug",
+      "truth": "empty-input",
+      "predicted": "empty-input",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "meanOf([])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "nondeterministic-sum",
+      "expect": "bug",
+      "truth": "non-determinism",
+      "predicted": "non-determinism",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "noisyTotal([0])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "palindrome-off-by-one",
+      "expect": "bug",
+      "truth": "wrong-comparison",
+      "predicted": "wrong-comparison",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "pal(\"aaa\")",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "rotate-negative-k",
+      "expect": "bug",
+      "truth": "modulo-sign",
+      "predicted": "modulo-sign",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "rotateRight([1, 0], -1)",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "second-largest-dupes",
+      "expect": "bug",
+      "truth": "duplicates-ignored",
+      "predicted": "duplicates-ignored",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "runnerUp([Infinity, Infinity])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "sorted-inverted",
+      "expect": "bug",
+      "truth": "wrong-comparison",
+      "predicted": "wrong-comparison",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "ascending([1, 0])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "sum-off-by-one",
+      "expect": "bug",
+      "truth": "off-by-one",
+      "predicted": "off-by-one",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "total(\"u\")",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "sum-seeded-from-input",
+      "expect": "bug",
+      "truth": "empty-input",
+      "predicted": "empty-input",
+      "found": true,
+      "correctPrediction": true,
+      "counterexample": "sumOf([])",
+      "kind": "wrong-answer"
+    },
+    {
+      "id": "vowels-nan-crash",
+      "expect": "bug",
+      "truth": "non-finite",
+      "predicted": "empty-input",
+      "found": true,
+      "correctPrediction": false,
+      "counterexample": "vowelRun(\" \")",
+      "kind": "threw"
+    }
+  ]
+}

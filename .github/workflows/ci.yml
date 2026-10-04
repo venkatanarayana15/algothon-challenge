@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Both engines run untrusted JavaScript, so the sandbox behaviour differs
+      # between platforms. Running on Linux is what the deploy target uses.
+      - name: Self-test -- all seeded examples must yield a counterexample
+        run: npm run selftest
+
+      - name: Benchmark -- detection and false-positive rates
+        run: npm run benchmark
+
+      - name: Build
+        run: npm run build
+
+      # A failure here means the site would show a finding that is not real, or
+      # miss one that is. Regenerates the data and compares only the fields that
+      # an honest run can reproduce (timing, input counts, and the counterexample
+      # for the deliberately non-deterministic case are excluded -- see
+      # scripts/check-data.js). Every rate and every verdict must match.
+      - name: Check generated data is up to date
+        run: npm run check:data
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7

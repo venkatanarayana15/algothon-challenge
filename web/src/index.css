@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-ink-950 text-slate-200 font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-rose-500/30 text-white;
+  }
+
+  /* Subtle grid backdrop -- gives the hero depth without an image request. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ink.700') transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply bg-ink-700 rounded-full;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-600;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-white/[0.06] bg-ink-900/60 backdrop-blur-sm;
+  }
+
+  .panel-raised {
+    @apply rounded-2xl border border-white/[0.08] bg-ink-900/80 shadow-2xl shadow-black/40;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03]
+      px-2.5 py-1 text-xs font-medium text-slate-400;
+  }
+
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+  }
+
+  /* Textarea that looks like an editor without pulling in a full editor bundle. */
+  .code-area {
+    @apply w-full resize-none bg-transparent font-mono text-[13px] leading-relaxed text-slate-200
+      outline-none placeholder:text-slate-600;
+    tab-size: 2;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-br from-white via-slate-200 to-slate-400 bg-clip-text text-transparent;
+  }
+
+  .gradient-rose {
+    @apply bg-gradient-to-r from-rose-400 via-rose-300 to-amber-300 bg-clip-text text-transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

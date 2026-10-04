@@ -1,0 +1,8 @@
+# Keep line endings stable across Windows, Linux CI and the deploy target.
+# Without this, a Windows checkout rewrites every file to CRLF and produces a
+# whole-repository diff that has nothing to do with any actual change.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

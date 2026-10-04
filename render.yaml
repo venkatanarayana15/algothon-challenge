@@ -1,0 +1,32 @@
+# Render blueprint -- deploys the whole app as one process: Express serves the
+# API and the built static bundle from the same port.
+#
+# Deploy: push this repo to GitHub, create a Render Blueprint, pick the repo.
+# Or use the "Deploy to Render" button in the README.
+#
+# Health check hits /api/health, which the server already exposes.
+
+services:
+  - type: web
+    name: counterexample
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Node, not static hosting: the engine runs untrusted code server-side.
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Optional. Set any ONE of these in the Render dashboard to enable the
+      # generated-oracle and model-written-explanation paths. The deterministic
+      # core works with none of them.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
