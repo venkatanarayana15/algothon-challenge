@@ -281,6 +281,9 @@ export default function App() {
       const mod = event.metaKey || event.ctrlKey
       if (mod && event.key.toLowerCase() === 'k') {
         event.preventDefault()
+        // Only one overlay at a time. Stacking the palette on top of the
+        // shortcut sheet traps Escape in whichever one is not listening for it.
+        setShortcutsOpen(false)
         setPaletteOpen((open) => !open)
         return
       }
@@ -299,6 +302,7 @@ export default function App() {
       // layouts where it is not, without stealing it from a text field.
       if (event.key === '?' && !isTypingTarget(event.target)) {
         event.preventDefault()
+        setPaletteOpen(false)
         setShortcutsOpen((open) => !open)
       }
     }
@@ -454,8 +458,14 @@ export default function App() {
         health={health}
         isRunning={isRunning}
         canRun={Boolean(code.trim())}
-        onOpenPalette={() => setPaletteOpen(true)}
-        onOpenShortcuts={() => setShortcutsOpen(true)}
+        onOpenPalette={() => {
+          setShortcutsOpen(false)
+          setPaletteOpen(true)
+        }}
+        onOpenShortcuts={() => {
+          setPaletteOpen(false)
+          setShortcutsOpen(true)
+        }}
         onRun={() => void run()}
       />
 
