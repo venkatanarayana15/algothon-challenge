@@ -7,6 +7,7 @@ import { getLlmConfig } from './engine/llm.js'
 import { toJsonSafe } from './engine/json-safe.js'
 import { EXAMPLES, SECURITY_EXAMPLES } from './examples.js'
 import { auditTarget } from './target/audit.js'
+import { buildRegressionTest } from './target/regression-test.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -69,6 +70,25 @@ app.get('/api/audit', async (_req, res) => {
   } catch (err) {
     console.error('[audit] failed:', err)
     res.status(500).json({ error: 'The audit failed to complete.', kind: 'internal' })
+  }
+})
+
+/**
+ * The audit's findings as a runnable test file.
+ *
+ * The artifact a reviewer can take away and execute themselves: a standard
+ * `node:test` suite with no dependency beyond Node, written against the FIXED
+ * behaviour so it fails against the vulnerable version. Generated from the same
+ * audit report the panel renders, so the download cannot disagree with the
+ * screen.
+ */
+app.get('/api/audit/regression-test', async (_req, res) => {
+  try {
+    const report = await auditTarget({ budgets: 2500 })
+    res.json({ ...buildRegressionTest(report), target: report.target })
+  } catch (err) {
+    console.error('[audit/regression-test] failed:', err)
+    res.status(500).json({ error: 'The regression test could not be generated.', kind: 'internal' })
   }
 })
 

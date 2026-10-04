@@ -19,7 +19,8 @@
  * than printing a red line nobody reads.
  */
 import assert from 'node:assert/strict'
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -253,6 +254,49 @@ async function main() {
       assert.ok(v.fix, `${v.id} has a fix`)
       assert.ok(v.owasp, `${v.id} names an OWASP category`)
     }
+  })
+
+  /* ------------------------------------------------- downloadable test suite */
+
+  // The artifact a reviewer takes away. It must be runnable, so this asserts the
+  // generated source is a valid node:test module that actually imports cleanly --
+  // a syntax error here would only surface after the judge downloaded it.
+  const suite = await get('/api/audit/regression-test')
+  check('the regression test can be generated', () => assert.equal(suite.status, 200))
+  check('it is offered as a node --test file', () => {
+    assert.equal(suite.json.filename, 'security-regression.test.mjs')
+    assert.ok(suite.json.runs >= 4, `expected several tests, got ${suite.json.runs}`)
+  })
+  await checkAsync('it is syntactically valid and runs as a real node --test module', async () => {
+    assert.match(suite.json.contents, /from 'node:test'/, 'imports the node test runner')
+    // Executed rather than pattern-matched: a generated file that is subtly
+    // malformed only shows up when something imports it, and "the judge
+    // downloaded a file that does not run" is exactly the failure worth catching.
+    const file = path.join(root, '.e2e-generated.test.mjs')
+    fs.writeFileSync(file, suite.json.contents)
+    try {
+      const out = execFileSync(process.execPath, ['--test', file], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 120000,
+      })
+      const pass = /^(?:#|ℹ) pass (\d+)$/m.exec(out)
+      const fail = /^(?:#|ℹ) fail (\d+)$/m.exec(out)
+      assert.ok(Number(pass?.[1] ?? 0) > 0, 'the generated suite has passing tests')
+      assert.equal(Number(fail?.[1] ?? 1), 0, 'the generated suite has no failures')
+    } finally {
+      fs.rmSync(file, { force: true })
+    }
+  })
+  check('it covers every finding and the legitimate behaviour', () => {
+    const source = suite.json.contents
+    for (const v of audit.json.vulnerabilities) assert.ok(source.includes(v.id), `${v.id} appears`)
+    assert.match(source, /legitimate behaviour is preserved/)
+    assert.ok(
+      source.includes('r === null') && source.includes('r === true'),
+      'the per-function acceptance convention is stated, not guessed',
+    )
   })
 
   /* ------------------------------------------------------------------ summary */

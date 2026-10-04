@@ -57,6 +57,15 @@ jobs:
       - name: End-to-end -- the running product
         run: npm run test:e2e
 
+      # Generates the runnable suite, runs it, then swaps the fixes back out and
+      # runs it again. A regression test that never goes red is not a regression
+      # test, and this is what proves these do. It runs the real vulnerable
+      # ReDoS, so it is deliberately a separate step with its own budget.
+      - name: Generate the regression test and prove it fails on the bug
+        run: |
+          npm run regression-test
+          npm run verify:regression-test
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:

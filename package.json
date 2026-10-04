@@ -13,6 +13,8 @@
     "selftest": "node server/engine/selftest.js",
     "audit": "node server/target/run-audit.js",
     "test:e2e": "node scripts/e2e.mjs",
+    "regression-test": "node server/target/write-regression-test.js",
+    "verify:regression-test": "node scripts/verify-regression-test.js",
     "benchmark": "node server/engine/benchmark.js",
     "snapshot": "node server/engine/snapshot.js",
     "check:data": "node scripts/check-data.js",

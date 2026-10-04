@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { fetchAudit, RequestError } from '../lib/api'
+import { fetchAudit, fetchRegressionTest, RequestError } from '../lib/api'
+import { downloadFile } from '../lib/evidence'
 import type { AuditFinding, AuditReport } from '../types'
 
 /**
@@ -19,6 +20,28 @@ export function AuditPanel() {
   const [report, setReport] = useState<AuditReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
+
+  /**
+   * Take the audit away as something runnable.
+   *
+   * The whole point of a security review is that the reviewer can check it, so
+   * the deliverable is the file rather than the screenshot. It is a standard
+   * `node:test` suite -- `node --test security-regression.test.mjs` and it runs,
+   * with nothing to install. It asserts the FIXED behaviour, so it goes red
+   * against the vulnerable version, which is what makes it a regression test.
+   */
+  const downloadSuite = async () => {
+    setDownloading(true)
+    try {
+      const file = await fetchRegressionTest()
+      downloadFile(file.filename, 'text/javascript', file.contents)
+    } catch {
+      setError('The regression test could not be generated. Try running `npm run regression-test` instead.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -106,6 +129,22 @@ export function AuditPanel() {
                 </span>
               )}
             </p>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-4">
+              <button
+                type="button"
+                onClick={downloadSuite}
+                disabled={downloading}
+                className="inline-flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-100 transition hover:border-rose-400/50 hover:bg-rose-500/15 disabled:opacity-60"
+              >
+                {downloading ? 'Generating…' : 'Download the regression test'}
+              </button>
+              <span className="text-[11px] text-slate-500">
+                A runnable <code className="text-slate-400">node --test</code> suite —{' '}
+                {report.vulnerabilities.length} finding tests plus {report.regression.legitimateChecks}{' '}
+                legitimate-behaviour checks. It fails against the vulnerable version, by design.
+              </span>
+            </div>
           </div>
         </>
       )}

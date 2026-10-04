@@ -114,11 +114,51 @@ Two "controls" were initially labelled correct and turned out not to be:
 type-confusion bug. Both were relabelled as bugs, because a benchmark label
 that disagrees with reality is worse than no label at all.
 
+### The ALG-CYBER-02 audit, and a test you can run
+
+`npm run audit` audits a deliberately vulnerable application: three findings,
+each detected, patched, retested, and checked against legitimate behaviour.
+All three reach `FIXED_AND_VERIFIED`, with **12/12 legitimate cases passing
+before and after** and nothing broken by the fixes.
+
+| Finding | Attack | Before | After |
+|---|---|---|---|
+| V1 `validateQty` accepts `NaN` | `validateQty(NaN)` | accepted | rejected |
+| V2 `isStrongEnoughPassword` ReDoS | `aaa…A1!` | hung — 1500ms budget exhausted | returned in ~0.1ms |
+| V3 `authorize` inverted comparison | `authorize("user", 0)` | accepted | rejected |
+
+The engine finds V1 by itself. V2 and V3 need knowledge a fuzzer does not have
+— a backtracking trigger, an inverted predicate — so they are confirmed against a
+supplied attack, which is how real testing works: the auditor brings the case.
+
+The deliverable is a file you can execute:
+
+```bash
+npm run regression-test        # writes security-regression.test.mjs
+node --test security-regression.test.mjs
+```
+
+It is a standard `node:test` suite — nothing to install — with 3 finding tests
+and 12 legitimate-behaviour tests. **It asserts the fixed behaviour, so it fails
+against the vulnerable version**, and `npm run verify:regression-test` proves
+both halves by swapping the fixes back out:
+
+```
+ok   patched source: 15 passing
+ok   vulnerable source: 3 failing (one per finding)
+ok   all 12 legitimate-behaviour tests stay green against vulnerable code
+```
+
+That last line is the one that matters. A "fix" that closed the vulnerability by
+breaking valid input would fail it — which is the half of a security fix that is
+usually skipped.
+
 ### The seeded gallery
 
-Thirteen submissions, each verified against the real engine
-(`npm run selftest`). Every counterexample below was found by the tool, not
-written by hand.
+The thirteen general submissions below, each verified against the real engine
+(`npm run selftest`). The gallery in the app also leads with three security
+validators, so it shows sixteen cards. Every counterexample below was found by
+the tool, not written by hand.
 
 | Submission | Counterexample | Returned | Expected | Inputs | Mutants killed |
 |---|---|---|---|---|---|
@@ -151,7 +191,10 @@ npm run selftest   # 19 checks: 13 counterexamples, 3 bypasses, 3 clean validato
 npm run benchmark  # detection rate, false positives, class accuracy
 npm run check:data # fails if web/src/data is out of date
 npm run audit      # the CYBER-02 arc: find, fix, retest, regression
-npm run test:e2e   # 29 checks against the running product over HTTP
+npm run test:e2e   # 33 checks against the running product over HTTP
+
+npm run regression-test          # writes security-regression.test.mjs
+npm run verify:regression-test   # proves it goes red on the vulnerable code
 ```
 
 `npm start` serves the built bundle, so run `npm run build` first or every route
@@ -170,6 +213,7 @@ says nothing about the others:
 | `check:data` | The **site's data** still matches what the engine produces today. |
 | `audit` | The **fix-and-retest arc**: every finding patched, every legitimate case still passing. |
 | `test:e2e` | The **shipped product** over HTTP — the bundle, the failure paths, the whole CYBER-02 arc. |
+| `verify:regression-test` | That the generated suite is a **real** regression test: green on the fix, red on the bug. |
 
 `.github/workflows/ci.yml` runs all six — typecheck, the self-test, the
 benchmark, the audit, the build, the staleness check on the generated data, and

@@ -13,7 +13,7 @@ npm run selftest      # must print 19/19
 npm run benchmark     # must print detection / false-positive lines
 npm run build         # must succeed
 npm run audit         # must print FIXED AND VERIFIED for every finding
-npm run test:e2e      # must print 29/29 against the running product
+npm run test:e2e      # must print 33/33 against the running product
 ```
 
 All five exit non-zero on failure, so if any of them stops you submitting, you
@@ -36,6 +36,10 @@ Then, from the **deployed URL** (not localhost), in an incognito window:
       re-runs by itself and lands on the same bypass
 - [ ] **⌘K** opens the palette, and the mobile bottom bar appears when you narrow the
       window (the side rail should disappear at the same time)
+- [ ] In the **audit** section, click **Download the regression test** → open
+      `security-regression.test.mjs` and run `node --test` on it → 15 passing. Say out
+      loud that the same file fails 3 against the unpatched code; that is the proof it is
+      a regression test rather than a description.
 - [ ] Gallery renders all 16 cards, filters work (3 security validators first)
 - [ ] Benchmark section renders with the three headline numbers
 - [ ] Works on a phone (narrow the window — do not skip this)

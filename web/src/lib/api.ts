@@ -89,3 +89,18 @@ export async function fetchAudit(signal?: AbortSignal): Promise<AuditReport> {
   if (!response.ok) throw new RequestError('Could not run the audit.', 'network')
   return (await response.json()) as AuditReport
 }
+
+/**
+ * The audit's findings as a runnable `node:test` file, generated server-side from
+ * the same audit report the panel renders -- so the download cannot disagree with
+ * what is on screen.
+ */
+export async function fetchRegressionTest(signal?: AbortSignal): Promise<{
+  filename: string
+  contents: string
+  runs: number
+}> {
+  const response = await fetch('/api/audit/regression-test', { signal })
+  if (!response.ok) throw new RequestError('Could not generate the regression test.', 'network')
+  return (await response.json()) as { filename: string; contents: string; runs: number }
+}
