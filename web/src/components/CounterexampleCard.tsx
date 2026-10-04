@@ -39,7 +39,7 @@ export function CounterexampleCard({ report }: Props) {
     ? 'Validation bypass found'
     : isFalseRejection
       ? 'Valid input rejected'
-      : 'Counterexample found'
+      : 'Breaking input found'
 
   const handleCopy = async () => {
     if (await copyToClipboard(finding.call)) {

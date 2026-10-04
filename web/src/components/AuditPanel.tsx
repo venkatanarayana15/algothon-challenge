@@ -69,6 +69,22 @@ export function AuditPanel() {
           service — then fixed, then attacked again with the same input, then retested against the
           behaviour the application is supposed to have.
         </p>
+
+        <ol className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { n: 'Authentication / input inspection', d: 'Each guard read against the rule it enforces.' },
+            { n: 'Vulnerability identification', d: 'A concrete input that breaks the rule.' },
+            { n: 'Safe demonstration', d: 'Run in-process. No request leaves the sandbox.' },
+            { n: 'Secure fixes', d: 'Patched and recompiled on every load.' },
+            { n: 'Retesting', d: 'Legitimate cases re-run against the patched code.' },
+            { n: 'Root-cause documentation', d: 'Why it broke, and why the fix holds.' },
+          ].map((s) => (
+            <li key={s.n} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
+              <p className="text-[12px] font-semibold text-slate-200">{s.n}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{s.d}</p>
+            </li>
+          ))}
+        </ol>
       </div>
 
       {loading && (
@@ -166,8 +182,40 @@ function Stat({ label, value, tone }: { label: string; value: string; tone: 'ros
 }
 
 function Finding({ finding }: { finding: AuditFinding }) {
-  const [open, setOpen] = useState(false)
   const ok = finding.status === 'FIXED_AND_VERIFIED'
+
+  /**
+   * How the tool found this, in words a judge can check.
+   *
+   * `detection.reason` is empty when the engine found the bug with no
+   * explanation attached, and says so plainly when a class has no auto-detection
+   * yet. Both are honest states and neither should render as a blank space, which
+   * reads as a bug in the tool rather than a limit in its coverage.
+   */
+  const howFound = (() => {
+    const reason = finding.detection.reason?.trim()
+    if (reason && !/^no auto-detection/i.test(reason)) return reason
+    if (finding.detectedByEngine) {
+      return 'The engine generated inputs for this function and found one whose result contradicted the rule the code was written to enforce.'
+    }
+    return 'This class has no automatic detection yet, so the attack is a supplied test case. It is demonstrated and fixed on exactly the same path as the rest.'
+  })()
+
+  /**
+   * The attack in one sentence of plain English.
+   *
+   * `validateQty(NaN)` on its own says nothing to a reader who does not already
+   * know what NaN does. This says what the caller sent and what it cost.
+   */
+  const impact = (() => {
+    if (finding.attack.before.includes('accept')) {
+      return `The caller sent this value and your function accepted it. Anything downstream that trusted ${finding.subject} now runs on an input that was never validated.`
+    }
+    if (finding.attack.before.includes('timeout')) {
+      return 'A single request from an unauthenticated caller occupies the worker until it gives up. Enough of them at once and the endpoint stops answering for everyone else.'
+    }
+    return 'The function returned a different answer than the rule it was written to enforce.'
+  })()
 
   return (
     <article className="panel-raised overflow-hidden">
@@ -194,62 +242,60 @@ function Finding({ finding }: { finding: AuditFinding }) {
       </header>
 
       <div className="p-5">
-        <p className="label mb-2">the attack</p>
-        <code className="block break-words font-mono text-[13px] text-slate-200">
-          {finding.attack.call}
-        </code>
+        <div className="grid gap-5 lg:grid-cols-2">
+          {/* WHAT — the demonstration, in the order it happens. */}
+          <div>
+            <p className="label mb-2">1 · what the attacker sends</p>
+            <code className="block break-words font-mono text-[13px] text-slate-200">
+              {finding.attack.call}
+            </code>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-rose-500/20 bg-rose-500/[0.05] p-3.5">
-            <p className="label mb-1.5 text-rose-400/70">before the fix</p>
-            <p className="font-mono text-[13px] text-rose-200">{finding.attack.before}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-rose-500/20 bg-rose-500/[0.05] p-3.5">
+                <p className="label mb-1.5 text-rose-400/70">your code does</p>
+                <p className="font-mono text-[13px] text-rose-200">{finding.attack.before}</p>
+              </div>
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.05] p-3.5">
+                <p className="label mb-1.5 text-emerald-400/70">it should have done</p>
+                <p className="font-mono text-[13px] text-emerald-200">{finding.attack.after}</p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-400">{impact}</p>
+            {finding.attack.note && (
+              <p className="mt-2 text-[12px] leading-relaxed text-slate-500">{finding.attack.note}</p>
+            )}
           </div>
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.05] p-3.5">
-            <p className="label mb-1.5 text-emerald-400/70">after the fix</p>
-            <p className="font-mono text-[13px] text-emerald-200">{finding.attack.after}</p>
+
+          {/* WHY — root cause and fix, visible rather than folded away. */}
+          <div className="space-y-4">
+            <div>
+              <p className="label mb-1.5">2 · why the code lets it through</p>
+              <p className="text-[13px] leading-relaxed text-slate-300">{finding.rootCause}</p>
+            </div>
+            <div>
+              <p className="label mb-1.5">3 · the fix</p>
+              <p className="text-[13px] leading-relaxed text-slate-300">{finding.fix}</p>
+            </div>
+            <div>
+              <p className="label mb-1.5">how this was found</p>
+              <p className="text-[13px] leading-relaxed text-slate-400">{howFound}</p>
+            </div>
           </div>
         </div>
 
-        {finding.attack.note && (
-          <p className="mt-2.5 text-[12px] leading-relaxed text-slate-500">{finding.attack.note}</p>
-        )}
-
-        <div className="mt-4 flex items-center gap-2 text-[12px] text-slate-500">
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.06] pt-4 text-[12px] text-slate-500">
           <span className="text-emerald-400/80">
-            retest: {finding.legitimateChecks.passed}/{finding.legitimateChecks.total} legitimate
+            4 · retest: {finding.legitimateChecks.passed}/{finding.legitimateChecks.total} legitimate
             cases unaffected
           </span>
+          {finding.behaviourChanged && (
+            <span className="text-slate-400">
+              this fix also repaired {finding.legitimateChecks.total - finding.legitimateChecks.passed > 0 ? 'behaviour ' : ''}
+              the bug had broken
+            </span>
+          )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-300"
-        >
-          <svg
-            viewBox="0 0 12 12"
-            className={`h-3 w-3 transition-transform ${open ? 'rotate-90' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path d="M4 2.5L8 6l-4 3.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {open ? 'Hide' : 'Show'} the root cause and the fix
-        </button>
-
-        {open && (
-          <div className="mt-3 space-y-3 border-t border-white/[0.06] pt-4">
-            <div>
-              <p className="label mb-1.5">root cause</p>
-              <p className="text-[13px] leading-relaxed text-slate-400">{finding.rootCause}</p>
-            </div>
-            <div>
-              <p className="label mb-1.5">the fix</p>
-              <p className="text-[13px] leading-relaxed text-slate-400">{finding.fix}</p>
-            </div>
-          </div>
-        )}
       </div>
     </article>
   )

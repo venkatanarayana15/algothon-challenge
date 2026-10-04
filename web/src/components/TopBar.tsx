@@ -42,10 +42,10 @@ export function TopBar({
           </span>
           <span className="flex flex-col items-start leading-none">
             <span className="text-[13px] font-semibold tracking-tight text-white transition group-hover:text-rose-200">
-              Counterexample
+              A2Z Cyber
             </span>
             <span className="mt-0.5 hidden text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 sm:block">
-              differential tester
+              security tester
             </span>
           </span>
         </button>

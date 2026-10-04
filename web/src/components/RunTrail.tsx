@@ -97,9 +97,9 @@ export function RunTrail({ records, onClear }: Props) {
 }
 
 function statusText(record: RunRecord): string {
-  if (record.status === 'no-counterexample-found') return 'no counterexample found'
+  if (record.status === 'no-counterexample-found') return 'no breaking input found'
   if (record.status === 'oracle-missing') return 'no reference implementation'
-  return 'counterexample found'
+  return 'breaking input found'
 }
 
 function StatusDot({ record }: { record: RunRecord }) {

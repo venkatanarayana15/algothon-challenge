@@ -44,7 +44,7 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-400" />
               </span>
               <span className="text-[11px] font-medium tracking-wide text-slate-400">
-                Differential testing · deterministic · no API key
+                A2Z Cyber · deterministic · no API key
               </span>
             </div>
 
@@ -55,7 +55,7 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
             </h1>
 
             <p className="mt-6 max-w-xl text-balance text-[17px] leading-relaxed text-slate-400">
-              Counterexample compares your function against an independent reference
+              A2Z Cyber compares your function against an independent reference
               implementation, throws thousands of boundary-biased inputs at both, and hands you
               the <span className="text-slate-200">smallest input where they disagree</span>. With no
               reference available it still finds crashes and non-termination. No signup, no upload,
