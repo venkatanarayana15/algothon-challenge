@@ -341,7 +341,7 @@
       "predicted": "non-determinism",
       "found": true,
       "correctPrediction": true,
-      "counterexample": "noisyTotal([0])",
+      "counterexample": "noisyTotal([-1])",
       "kind": "wrong-answer"
     },
     {
