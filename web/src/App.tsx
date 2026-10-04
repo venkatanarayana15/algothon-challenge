@@ -36,6 +36,7 @@ import { Gallery } from './components/Gallery'
 import { Pipeline, HonestLimits } from './components/Pipeline'
 import { BenchmarkMatrix } from './components/BenchmarkMatrix'
 import { CounterexampleCard } from './components/CounterexampleCard'
+import { LoopSteps } from './components/LoopSteps'
 import { ResultSheet } from './components/ResultSheet'
 import { PhaseTrace } from './components/PhaseTrace'
 import { MutationPanel } from './components/MutationPanel'
@@ -213,7 +214,13 @@ export default function App() {
           },
         ])
         requestAnimationFrame(() => {
-          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // The sheet carries the answer for runs the visitor asked for, so
+          // scrolling the page behind it just moves the ground under the
+          // dialog. Retests stay inline and do scroll, since there the page
+          // is the point.
+          if (origin !== 'manual') {
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
         })
         // Someone who pressed Analyse is waiting for an answer, so the short
         // version arrives as a sheet over the page they were on. Retests after
@@ -537,6 +544,15 @@ const revertFix = useCallback(() => {
               />
 
               <div ref={resultsRef} className="min-w-0 space-y-4">
+                {(isRunning || report) && (
+                  <LoopSteps
+                    found={report !== null}
+                    running={isRunning}
+                    fixOffered={fix !== null}
+                    fixed={previousCode !== null}
+                    verified={previousCode !== null && report?.status === 'no-counterexample-found'}
+                  />
+                )}
                 {isRunning && <RunningState />}
                 {error && <ErrorState message={error} />}
 
@@ -772,6 +788,14 @@ function RunningState() {
     'shrinking the failure',
     'checking the test catches mutants',
   ]
+  // Elapsed time, not progress: the analysis is one request and the client
+  // cannot see inside it, so the only honest moving number is the clock.
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    const start = Date.now()
+    const id = window.setInterval(() => setElapsed((Date.now() - start) / 1000), 250)
+    return () => window.clearInterval(id)
+  }, [])
 
   return (
     <section className="panel-raised overflow-hidden p-6">
@@ -781,6 +805,9 @@ function RunningState() {
           <path d="M14 8a6 6 0 00-6 6" strokeLinecap="round" />
         </svg>
         <h3 className="text-sm font-semibold text-white">Hunting for an input</h3>
+        <span className="ml-auto font-mono text-[11px] tabular-nums text-slate-500">
+          {elapsed.toFixed(1)}s
+        </span>
       </div>
 
       <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.05]">
