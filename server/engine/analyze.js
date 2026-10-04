@@ -266,15 +266,31 @@ export function inferParams(functionNode) {
         }
 
         if (COMPARE.has(n.operator)) {
+          // Ordering a value against a numeric literal is direct evidence that
+          // the author meant it to be a number, so record the type and not just
+          // the bound.
+          //
+          // This is what makes validators work at all. A range check is
+          // `if (q <= 0) return 'bad'` -- the parameter appears *only* in
+          // comparisons, so before this the type stayed 'unknown', the generator
+          // had nothing to aim at, and every validator came back as
+          // "no reference implementation". Equality is weighted lower than
+          // ordering, because comparing to a constant is weaker evidence of
+          // numeric intent than a range check is.
+          const RELATIONAL = new Set(['<', '<=', '>', '>='])
+          const weight = RELATIONAL.has(n.operator) ? 2 : 1
+
           if (leftParam !== undefined) {
             const e = touch(n.left.name)
             if (n.right.type === 'Literal' && typeof n.right.value === 'number') {
+              if (weight === 2) e.score.number += weight
               applyBound(e, n.operator, n.left, n.right.value)
             }
           }
           if (rightParam !== undefined) {
             const e = touch(n.right.name)
             if (n.left.type === 'Literal' && typeof n.left.value === 'number') {
+              if (weight === 2) e.score.number += weight
               applyBound(e, flip(n.operator), n.right, n.left.value)
             }
           }
@@ -302,6 +318,24 @@ export function inferParams(functionNode) {
           for (const arg of n.arguments) {
             const idx = paramIndexOf(arg, paramNames)
             if (idx !== undefined) get(arg.name).score.number += 3
+          }
+        }
+        // Number.isInteger(q) / Number.isFinite(q) tell us the author already
+        // guards this value, which tells us which guards are safe to hold them
+        // to. A validator that never checks wholeness must not be failed for
+        // accepting 0.5 just because the preset happens to be integral.
+        if (callee.type === 'MemberExpression' && callee.object.type === 'Identifier'
+            && callee.object.name === 'Number' && callee.property.type === 'Identifier'
+            && (callee.property.name === 'isInteger' || callee.property.name === 'isFinite'
+              || callee.property.name === 'isNaN')) {
+          for (const arg of n.arguments) {
+            const idx = paramIndexOf(arg, paramNames)
+            if (idx === undefined) continue
+            const entry = get(arg.name)
+            if (callee.property.name === 'isInteger') entry.checksInteger = true
+            if (callee.property.name === 'isFinite' || callee.property.name === 'isNaN') {
+              entry.checksFinite = true
+            }
           }
         }
         break
@@ -394,6 +428,8 @@ export function inferParams(functionNode) {
       ambiguous: resolved.type === 'sequence',
       min: entry.min,
       max: entry.max,
+      checksInteger: Boolean(entry.checksInteger),
+      checksFinite: Boolean(entry.checksFinite),
     }
   }
 

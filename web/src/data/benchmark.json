@@ -110,6 +110,7 @@
     "non-termination": "Non-termination",
     "off-by-one": "Off-by-one bounds",
     "ordering-contract": "Ordering contract",
+    "validation-bypass": "Validation bypass",
     "wrong-comparison": "Inverted comparison"
   },
   "rows": [
@@ -147,11 +148,11 @@
       "id": "control-fib",
       "expect": "bug",
       "truth": "non-finite",
-      "predicted": "unknown",
+      "predicted": "non-termination",
       "found": true,
       "correctPrediction": false,
-      "counterexample": "correctFib(true)",
-      "kind": "wrong-answer"
+      "counterexample": "correctFib(2147483644)",
+      "kind": "timeout"
     },
     {
       "id": "control-gcd",
@@ -340,7 +341,7 @@
       "predicted": "non-determinism",
       "found": true,
       "correctPrediction": true,
-      "counterexample": "noisyTotal([0])",
+      "counterexample": "noisyTotal([-1])",
       "kind": "wrong-answer"
     },
     {

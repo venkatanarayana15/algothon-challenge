@@ -30,6 +30,16 @@ export function classifyFinding(finding, source) {
   // same input returning two different values.
   if (finding.kind === 'nondeterministic') return 'non-determinism'
 
+  // A validator was asked to accept an input its policy rejects. The engine
+  // observed this directly, so it is more precise than anything the argument
+  // evidence below could infer, and it is checked first for that reason.
+  //
+  // The dominant cause is type coercion: `if (q <= 0)` written for numbers is
+  // silently satisfied by `true`, `null` and `""`, because every one of those
+  // compares false against both bounds. `NaN` and `Infinity` do the same. The
+  // fix is to check the type before the range, not to add more comparisons.
+  if (finding.verdict) return 'validation-bypass'
+
   // A timeout on a self-referential function is a recursion problem. This must
   // be checked before the argument evidence: `fib(-1)` fails on a negative
   // argument, but the bug is the incomplete guard, not the sign.
@@ -178,5 +188,7 @@ export const CLASS_ADVICE = {
   'modulo-sign': 'Normalise modulo with ((k % n) + n) % n; JavaScript keeps the sign of the dividend.',
   'non-determinism': 'Remove hidden state: Math.random, Date.now, and mutation of shared arrays.',
   'non-termination': 'Bound the loop or iteration explicitly rather than relying on input shape.',
+  'validation-bypass':
+    'Check the type before the range. `if (q <= 0)` is silently satisfied by true, null, "", NaN and Infinity, because every one of those compares false against both bounds. Number.isInteger(q) first, then the range.',
   unknown: 'Compare your two implementations line by line and find the first branch that differs.',
 }

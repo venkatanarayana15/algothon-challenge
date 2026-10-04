@@ -13,10 +13,13 @@
  *
  *   1. Timing and input counts. How many inputs the fuzzer gets through before
  *      it finds (or fails to find) a bug depends on wall-clock timing.
- *   2. The counterexample for the `non-determinism` class. `noisyTotal` injects
- *      random noise, so *many* distinct inputs break it and which one the
- *      fuzzer happens to land on first is arbitrary. Pinning one would be
- *      pinning an arbitrary choice, not a fact.
+ *   2. The observation fields of the `non-determinism` case. `noisyTotal`
+ *      injects random noise, so *many* distinct inputs break it, which one the
+ *      fuzzer lands on first is arbitrary, and on any given run it may land on
+ *      an input that merely returns a different answer (`wrong-answer`) rather
+ *      than one that disagrees twice (`nondeterministic`). Pinning any of that
+ *      would be pinning an arbitrary choice, not a fact. What is stable and
+ *      what matters -- that the bug is found at all -- is still checked.
  *
  * Everything else -- every rate, every pass/fail, every classification, every
  * other counterexample -- must be identical, and that is what this enforces. If
@@ -50,8 +53,11 @@ function normalize(fileName, parsed) {
       summary: parsed.summary,
       classes: parsed.classes,
       rows: parsed.rows.map((r) => {
-        const { counterexample, ...rest } = r
-        return NONDETERMINISTIC.has(r.id) ? { ...rest, counterexample: '<varies>' } : rest
+        if (!NONDETERMINISTIC.has(r.id)) return r
+        // Keep only what a random subject still determines. `found` is the
+        // load-bearing one: if a regression stopped us detecting this bug at
+        // all, the detection rate in `summary` would move and this fails too.
+        return { id: r.id, expect: r.expect, truth: r.truth, found: r.found }
       }),
     }
   }

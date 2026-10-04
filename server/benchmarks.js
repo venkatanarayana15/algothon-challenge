@@ -18,7 +18,7 @@
  * model.
  */
 
-/** @typedef {'off-by-one'|'empty-input'|'missing-base-case'|'wrong-comparison'|'non-finite'|'empty-sentinel'|'duplicates-ignored'|'ordering-contract'|'negative-domain'|'modulo-sign'|'non-determinism'|'none'} BugClass */
+/** @typedef {'off-by-one'|'empty-input'|'missing-base-case'|'wrong-comparison'|'non-finite'|'empty-sentinel'|'duplicates-ignored'|'ordering-contract'|'negative-domain'|'modulo-sign'|'non-determinism'|'validation-bypass'|'none'} BugClass */
 
 export const BUG_CLASSES = [
   'off-by-one',
@@ -33,6 +33,7 @@ export const BUG_CLASSES = [
   'negative-domain',
   'modulo-sign',
   'non-determinism',
+  'validation-bypass',
 ]
 
 export const CLASS_LABELS = {
@@ -48,6 +49,7 @@ export const CLASS_LABELS = {
   'negative-domain': 'Negative domain',
   'modulo-sign': 'Modulo on negatives',
   'non-determinism': 'Non-determinism',
+  'validation-bypass': 'Validation bypass',
   none: 'Correct implementations',
 }
 

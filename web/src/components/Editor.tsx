@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { CodeBlock } from './CodeBlock'
 import { detectFunctionName } from '../lib/format'
+import { POLICY_PRESETS } from '../lib/policies'
 import type { Example } from '../types'
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
   onSpecChange: (spec: string) => void
   functionName: string
   onFunctionNameChange: (name: string) => void
+  policyId: string
+  onPolicyIdChange: (id: string) => void
   onRun: () => void
   onPickExample: (example: Example) => void
   examples: Example[]
@@ -23,6 +26,8 @@ export function Editor({
   onSpecChange,
   functionName,
   onFunctionNameChange,
+  policyId,
+  onPolicyIdChange,
   onRun,
   onPickExample,
   examples,
@@ -150,6 +155,23 @@ export function Editor({
           </label>
 
           <label className="block">
+            <span className="label mb-1.5 block">Hold it to a rule (optional)</span>
+            <select
+              value={policyId}
+              onChange={(e) => onPolicyIdChange(e.target.value)}
+              className="w-full appearance-none rounded-md border border-white/[0.08] bg-ink-900 px-2.5 py-1.5
+                text-[13px] text-slate-200 outline-none transition focus:border-rose-500/40"
+            >
+              <option value="">Detect automatically</option>
+              {POLICY_PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label} — {p.hint}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block sm:col-span-2">
             <span className="label mb-1.5 block">Task spec (optional)</span>
             <input
               type="text"
@@ -162,9 +184,11 @@ export function Editor({
             />
           </label>
           <p className="text-[11px] leading-relaxed text-slate-600 sm:col-span-2">
-            A one-line spec lets us generate an independent reference implementation for
-            functions outside the built-in library. Without one we can still detect crashes and
-            infinite loops.
+            Validators are recognised on their own, so pasting one is usually enough — we look for
+            inputs your check should have rejected but let through, which is how a{' '}
+            <span className="text-slate-500">NaN</span> gets past a range test. Pick a rule only to
+            force a specific range. A spec lets us generate a reference implementation for
+            functions outside the built-in library.
           </p>
         </div>
       )}

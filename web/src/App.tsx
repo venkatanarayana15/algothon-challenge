@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import snapshot from './data/snapshot.json'
 import type { AnalysisReport, Example, SnapshotEntry } from './types'
 import { analyze, fetchExamples, RequestError } from './lib/api'
+import { findPolicy } from './lib/policies'
 import { Hero } from './components/Hero'
 import { Editor } from './components/Editor'
 import { Gallery } from './components/Gallery'
@@ -41,6 +42,7 @@ export default function App() {
   const [code, setCode] = useState(DEFAULT_CODE)
   const [spec, setSpec] = useState('')
   const [functionName, setFunctionName] = useState('')
+  const [policyId, setPolicyId] = useState('')
   const [report, setReport] = useState<AnalysisReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -67,8 +69,16 @@ export default function App() {
     setReport(null)
 
     try {
+      const preset = findPolicy(policyId)
       const result = await analyze(
-        { code, functionName: functionName.trim() || undefined, spec: spec.trim() || undefined },
+        {
+          code,
+          functionName: functionName.trim() || undefined,
+          spec: spec.trim() || undefined,
+          policy: preset
+            ? { min: preset.min, max: preset.max, integer: preset.integer }
+            : undefined,
+        },
         controller.signal,
       )
       setReport(result)
@@ -83,12 +93,13 @@ export default function App() {
     } finally {
       setIsRunning(false)
     }
-  }, [code, functionName, spec])
+  }, [code, functionName, spec, policyId])
 
   const loadExample = useCallback((example: Example | SnapshotEntry) => {
     setCode(example.code)
     setSpec(example.spec ?? '')
     setFunctionName('')
+    setPolicyId('')
     setReport(null)
     setError(null)
     requestAnimationFrame(() => {
@@ -109,6 +120,8 @@ export default function App() {
             onSpecChange={setSpec}
             functionName={functionName}
             onFunctionNameChange={setFunctionName}
+            policyId={policyId}
+            onPolicyIdChange={setPolicyId}
             onRun={run}
             onPickExample={loadExample}
             examples={examples}
@@ -219,7 +232,7 @@ function RunningState() {
     'reading your code',
     'inferring parameter types',
     'generating inputs',
-    'running both implementations',
+    'running your function',
     'shrinking the failure',
     'checking the test catches mutants',
   ]

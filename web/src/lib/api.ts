@@ -7,6 +7,11 @@ export interface AnalyzeRequest {
   oracleCode?: string
   oracleSignature?: string
   seed?: number
+  /**
+   * Hold a validator to an explicit rule instead of inferring one. Omit it and
+   * the engine still recognises most validators from their own shape.
+   */
+  policy?: { min: number; max: number; integer?: boolean }
 }
 
 export class RequestError extends Error {

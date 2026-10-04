@@ -21,6 +21,17 @@ export function CounterexampleCard({ report }: Props) {
   if (!finding || !report.minimal) return null
 
   const kind = KIND_LABEL[finding.kind] ?? KIND_LABEL['wrong-answer']
+  const isBypass = finding.verdict === 'bypass'
+  const isFalseRejection = finding.verdict === 'false-rejection'
+
+  // A validator does not have a right answer, it has a verdict. "expected
+  // reject / actual accept" is technically complete and practically unreadable,
+  // so the security case gets its own framing instead of reusing the value one.
+  const heading = isBypass
+    ? 'Validation bypass found'
+    : isFalseRejection
+      ? 'Valid input rejected'
+      : 'Counterexample found'
 
   const handleCopy = async () => {
     if (await copyToClipboard(finding.call)) {
@@ -37,7 +48,12 @@ export function CounterexampleCard({ report }: Props) {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
           </span>
-          <h3 className="text-sm font-semibold text-white">Counterexample found</h3>
+          <h3 className="text-sm font-semibold text-white">{heading}</h3>
+          {isBypass && (
+            <span className="chip border-rose-500/40 bg-rose-500/15 font-semibold uppercase tracking-wide text-rose-200">
+              bypass
+            </span>
+          )}
           <span className={`chip ${kind.tone}`}>{kind.label}</span>
         </div>
 
@@ -50,7 +66,13 @@ export function CounterexampleCard({ report }: Props) {
       </header>
 
       <div className="p-5">
-        <p className="label mb-2.5">This is the smallest input that breaks your function</p>
+        <p className="label mb-2.5">
+          {isBypass
+            ? 'This input should have been rejected, and was not'
+            : isFalseRejection
+              ? 'This input is valid, and was rejected'
+              : 'This is the smallest input that breaks your function'}
+        </p>
 
         <div className="relative rounded-lg border border-rose-500/25 bg-rose-500/[0.06] px-4 py-4">
           <button
@@ -103,22 +125,46 @@ export function CounterexampleCard({ report }: Props) {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-white/[0.06] bg-ink-950/60 p-4">
             <p className="label mb-2 text-rose-400/70">
-              {finding.errorMessage ? 'Your function threw' : 'Your function returned'}
+              {finding.errorMessage
+                ? 'Your function threw'
+                : isBypass || isFalseRejection
+                  ? 'Your validator said'
+                  : 'Your function returned'}
             </p>
-            <code className="block break-words font-mono text-[13px] text-rose-200">
-              {finding.errorMessage ? (
-                <span className="text-amber-300">{finding.errorMessage}</span>
-              ) : (
-                formatValue(finding.actual)
-              )}
-            </code>
+            {isBypass || isFalseRejection ? (
+              <p className="text-[13px] leading-relaxed text-rose-200">
+                {finding.actual === 'accept' ? (
+                  <>accept<span className="text-slate-500"> — let the input through</span></>
+                ) : (
+                  <>reject<span className="text-slate-500"> — blocked the input</span></>
+                )}
+              </p>
+            ) : (
+              <code className="block break-words font-mono text-[13px] text-rose-200">
+                {finding.errorMessage ? (
+                  <span className="text-amber-300">{finding.errorMessage}</span>
+                ) : (
+                  formatValue(finding.actual)
+                )}
+              </code>
+            )}
           </div>
 
           <div className="rounded-lg border border-white/[0.06] bg-ink-950/60 p-4">
             <p className="label mb-2 text-emerald-400/70">
-              {finding.expected === undefined ? 'What it should return' : 'Correct answer'}
+              {isBypass || isFalseRejection
+                ? 'The rule should have said'
+                : 'Correct answer'}
             </p>
-            {finding.expected === undefined ? (
+            {isBypass || isFalseRejection ? (
+              <p className="text-[13px] leading-relaxed text-emerald-200">
+                {finding.expected === 'accept' ? (
+                  <>accept<span className="text-slate-500"> — the input is well-formed</span></>
+                ) : (
+                  <>reject<span className="text-slate-500"> — the input is not allowed</span></>
+                )}
+              </p>
+            ) : finding.expected === undefined ? (
               <p className="text-[13px] leading-relaxed text-slate-500">
                 Unknown. No reference implementation was available for this function, so we can prove
                 that it breaks but not what the right answer was. Add a spec to compare against one.
@@ -163,14 +209,22 @@ export function CounterexampleCard({ report }: Props) {
                 </span>
               ) : (
                 <>
-                  <span className="text-slate-300">{report.oracle.signature}</span>
+                  <span className="text-slate-300">
+                    {report.oracle.source === 'policy' ||
+                    report.oracle.source === 'policy-preset'
+                      ? 'Intended rule, enforced strictly'
+                      : report.oracle.signature}
+                  </span>
                   <span className="mx-1.5 text-slate-600">·</span>
                   <span className="text-slate-500">
                     {report.oracle.source === 'library'
                       ? 'built-in reference'
-                      : report.oracle.source === 'model'
-                        ? 'generated for this run'
-                        : 'yours'}
+                      : report.oracle.source === 'policy' ||
+                          report.oracle.source === 'policy-preset'
+                        ? 'read from your own checks'
+                        : report.oracle.source === 'model'
+                          ? 'generated for this run'
+                          : 'yours'}
                   </span>
                 </>
               )}

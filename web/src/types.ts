@@ -22,6 +22,13 @@ export interface Finding {
   errorMessage?: string
   second?: unknown
   reduction?: number
+  /**
+   * Present when the subject is a validator rather than a value-returning
+   * function. A bypass is the severe direction: the subject accepted an input
+   * the policy rejects.
+   */
+  verdict?: 'bypass' | 'false-rejection'
+  subjectValue?: unknown
 }
 
 export interface MutationResult {
@@ -51,7 +58,7 @@ export interface AnalysisReport {
   oracle: {
     signature: string
     summary: string
-    source: 'library' | 'model' | 'user' | 'none'
+    source: 'library' | 'model' | 'user' | 'none' | 'policy' | 'policy-preset'
     code: string
   }
   baseline: { status: string; value?: unknown; error?: string }

@@ -34,7 +34,7 @@ export function Hero({ onPickEntry }: Props) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-400" />
               </span>
               <span className="text-[11px] font-medium tracking-wide text-slate-400">
-                Differential testing, in your browser
+                Differential testing · deterministic · no API key
               </span>
             </div>
 
@@ -45,10 +45,11 @@ export function Hero({ onPickEntry }: Props) {
             </h1>
 
             <p className="mt-6 max-w-xl text-balance text-[17px] leading-relaxed text-slate-400">
-              Counterexample writes an independent implementation of your function, throws
-              thousands of inputs at both, and hands you the{' '}
-              <span className="text-slate-200">smallest input where they disagree</span>. No
-              signup, no upload, no API key.
+              Counterexample compares your function against an independent reference
+              implementation, throws thousands of boundary-biased inputs at both, and hands you
+              the <span className="text-slate-200">smallest input where they disagree</span>. With no
+              reference available it still finds crashes and non-termination. No signup, no upload,
+              no API key.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
@@ -68,7 +69,7 @@ export function Hero({ onPickEntry }: Props) {
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
                     <span className="text-[11px] font-medium text-slate-400">
-                      live result · {headline.title}
+                      real engine output · {headline.title}
                     </span>
                   </div>
                   <span className={`chip ${DIFFICULTY_TONE[headline.difficulty]}`}>

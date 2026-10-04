@@ -10,6 +10,11 @@ import { EXAMPLES } from './examples.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
+// Render terminates TLS at its proxy, so `req.ip` is the proxy's address unless
+// X-Forwarded-For is trusted. Without this the rate limiter below buckets every
+// visitor in the world into one counter, and simultaneous judges get 429s.
+app.set('trust proxy', 1)
+
 app.use(express.json({ limit: '256kb' }))
 
 // Small, honest rate limit: enough to stop accidental runaway loops from a

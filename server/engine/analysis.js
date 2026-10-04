@@ -5,7 +5,7 @@
 
 import { inferParams, jsDocTypeToSchema, parseJsDoc, resolveTarget, AnalysisError } from './analyze.js'
 import { generateInputs, makeRandom } from './generator.js'
-import { compileOracle, callVerified, findFirstDisagreement, getLibraryOracle, guessSignature, synthesizeOracle } from './oracles.js'
+import { compileOracle, callVerified, findFirstDisagreement, getLibraryOracle, guessSignature, synthesizeOracle, buildRangePolicy, subjectAccepts, POLICY_PRESETS, resolvePolicy } from './oracles.js'
 import { callFn, compile, deepEqual, formatCall } from './sandbox.js'
 import { minimize, describeMinimal } from './shrinker.js'
 import { explainFinding, getLlmClient, mutationScore } from './llm.js'
@@ -68,6 +68,7 @@ export async function analyze(request, options = {}) {
   }
 
   const oracle = compileOracle(oracleInfo.code, functionName)
+  const mode = oracleInfo.mode ?? 'value'
   if (!oracle) {
     return {
       status: 'oracle-missing',
@@ -88,6 +89,8 @@ export async function analyze(request, options = {}) {
     lengthLinks: inferred.lengthLinks,
     budgets,
     seed: request.seed ?? 1337,
+    mode,
+    strictOnly: Boolean(oracleInfo.strictOnly),
   })
 
   // ---- 4. Shrink the counterexample ---------------------------------------
@@ -100,6 +103,9 @@ export async function analyze(request, options = {}) {
       oracleCtx: oracle.context,
       functionName,
       perCallTimeoutMs: Math.min(budgets.perCallTimeoutMs * 2, 120),
+      mode,
+      verdict: fuzz.finding.verdict,
+      strictOnly: Boolean(oracleInfo.strictOnly),
     })
 
     const seedArgs = fuzz.finding.args
@@ -117,14 +123,28 @@ export async function analyze(request, options = {}) {
     const subjectFinal = callVerified(subject.context, functionName, shrunk, 200)
     const oracleFinal = callVerified(oracle.context, functionName, shrunk, 200)
 
+    // In accept mode the interesting pair is two verdicts, not two return
+    // values. Showing the raw subject return here would read as
+    // "expected reject, actual null" -- true, but unreadable for anyone
+    // reviewing a finding.
+    const verdicts =
+      mode === 'accept' && subjectFinal.status === 'ok' && oracleFinal.status === 'ok'
+        ? {
+            expected: oracleFinal.value === true ? 'accept' : 'reject',
+            actual: subjectAccepts(subjectFinal.value) ? 'accept' : 'reject',
+          }
+        : {
+            expected: oracleFinal.status === 'ok' ? oracleFinal.value : fuzz.finding.expected,
+            actual: subjectFinal.status === 'ok' ? subjectFinal.value : fuzz.finding.actual,
+          }
+
     finding = {
       ...fuzz.finding,
       args: shrunk,
       call: formatCall(functionName, shrunk),
       originalCall: formatCall(functionName, seedArgs),
       reduction: fuzz.finding.args.length ? shrinkRatio(seedArgs, shrunk) : 1,
-      expected: oracleFinal.status === 'ok' ? oracleFinal.value : fuzz.finding.expected,
-      actual: subjectFinal.status === 'ok' ? subjectFinal.value : fuzz.finding.actual,
+      ...verdicts,
       errorMessage: subjectFinal.status === 'threw' ? subjectFinal.error : finding?.error,
     }
     minimal = describeMinimal(functionName, shrunk)
@@ -141,6 +161,9 @@ export async function analyze(request, options = {}) {
         if (subjectResult.status === 'unstable') return 'unstable'
         if (subjectResult.status !== 'ok') return 'threw'
         if (oracleResult.status !== 'ok') return 'agree'
+        if (mode === 'accept') {
+          return subjectAccepts(subjectResult.value) === (oracleResult.value === true) ? 'agree' : 'wrong'
+        }
         return deepEqual(subjectResult.value, oracleResult.value) ? 'agree' : 'wrong'
       })
     } catch {
@@ -173,6 +196,7 @@ export async function analyze(request, options = {}) {
       summary: oracleInfo.summary,
       source: oracleInfo.source,
       code: oracleInfo.code,
+      mode,
     },
     baseline: summarizeCall(baseline),
     stats: fuzz.stats,
@@ -206,22 +230,63 @@ function summarizeCall(result) {
 }
 
 async function resolveOracle({ request, target, functionName, params, options }) {
+  // A validator is checked by policy, so it is resolved before the value oracle
+  // library. A name beats an explicit oracle only in the sense that a policy
+  // and an implementation are different kinds of reference; both still lose to
+  // something the user wrote themselves.
+  const policy = request.policy ?? (request.policyName ? POLICY_PRESETS[request.policyName] : undefined)
+  if (policy) {
+    const { min, max, integer = true } = policy
+    return {
+      signature: `policy:${JSON.stringify({ min, max, integer })}`,
+      summary:
+        `Policy: accept ${integer ? 'integers' : 'numbers'} from ${min} to ${max}. ` +
+        'The reference is written strictly -- it rejects NaN, infinities and non-numbers -- because that ' +
+        'is the part a hand-written check usually forgets.',
+      code: buildRangePolicy(policy),
+      mode: 'accept',
+      source: request.policyName ? 'policy-preset' : 'policy',
+    }
+  }
+
   // Explicit oracle wins.
   if (request.oracleCode && request.oracleCode.trim()) {
-    return { signature: 'user-supplied', summary: 'Reference implementation you provided.', code: request.oracleCode, source: 'user' }
+    return {
+      signature: 'user-supplied',
+      summary: 'Reference implementation you provided.',
+      code: request.oracleCode,
+      source: 'user',
+      mode: request.oracleMode === 'accept' ? 'accept' : 'value',
+    }
   }
 
   const requested = request.oracleSignature
+  if (requested) {
+    const named = getLibraryOracle(requested)
+    if (named) return { ...named, source: 'library', mode: 'value' }
+  }
+
+  // Zero-setup path: a validator is recognised from its own name and shape, so
+  // pasting one finds its bypass without the user choosing a policy first.
+  //
+  // This has to run before `guessSignature`, which maps "one numeric parameter"
+  // to a primality oracle. Left in that order, a quantity validator gets handed
+  // `isPrime` and the tool confidently compares two unrelated answers -- the
+  // worst possible failure on the one class of function a security reviewer is
+  // relying on it for.
+  const detected = resolvePolicy({ functionName, params })
+  if (detected) return detected
+
   const signature = requested || guessSignature(functionName, params)
   const library = signature ? getLibraryOracle(signature) : null
   if (library) {
-    return { ...library, source: 'library' }
+    return { ...library, source: 'library', mode: 'value' }
   }
 
   const spec = request.spec || extractDocSpec(request.code)
   const llm = getLlmClient()
   const synthesized = await synthesizeOracle({ functionName, params, spec, llm, signal: options.signal })
-  if (synthesized) return { ...synthesized, source: 'model' }
+  if (synthesized) return { ...synthesized, source: 'model', mode: 'value' }
 
   return null
 }
@@ -238,7 +303,7 @@ export function extractDocSpec(code) {
   return text.slice(0, 800)
 }
 
-function runFuzz({ subjectCtx, oracleCtx, functionName, params, lengthLinks, budgets, seed }) {
+function runFuzz({ subjectCtx, oracleCtx, functionName, params, lengthLinks, budgets, seed, mode = 'value', strictOnly = false }) {
   const deadline = Date.now() + budgets.totalBudgetMs
   let tested = 0
   let agreementCount = 0
@@ -253,6 +318,8 @@ function runFuzz({ subjectCtx, oracleCtx, functionName, params, lengthLinks, bud
 
     const result = findFirstDisagreement(subjectCtx, oracleCtx, functionName, args, {
       perCallTimeoutMs: budgets.perCallTimeoutMs,
+      mode,
+      policyStrictOnly: strictOnly,
     })
 
     if (result.kind === 'agree') { agreementCount += 1; continue }
@@ -285,7 +352,7 @@ function runFuzz({ subjectCtx, oracleCtx, functionName, params, lengthLinks, bud
  * the shrinker minimises *towards* a garbage-collection pause and reports a
  * perfectly correct function as non-terminating.
  */
-function makeReproducer({ subjectCtx, oracleCtx, functionName, perCallTimeoutMs }) {
+function makeReproducer({ subjectCtx, oracleCtx, functionName, perCallTimeoutMs, mode = 'value', verdict, strictOnly = false }) {
   return (args) => {
     const subject = callVerified(subjectCtx, functionName, args, perCallTimeoutMs)
     if (subject.status === 'unstable') return false
@@ -296,6 +363,18 @@ function makeReproducer({ subjectCtx, oracleCtx, functionName, perCallTimeoutMs 
     }
     const oracle = callVerified(oracleCtx, functionName, args, perCallTimeoutMs)
     if (oracle.status !== 'ok') return false
+    if (mode === 'accept') {
+      const subjectVerdict = subjectAccepts(subject.value)
+      const policyVerdict = oracle.value === true
+      if (subjectVerdict === policyVerdict) return false
+      // Reproduce the same *direction* of failure the seed found. Without this
+      // the shrinker can drift onto the opposite one -- minimising a bypass into
+      // a false rejection, which would ship a counterexample that is not the
+      // bug we actually found.
+      const here = subjectVerdict && !policyVerdict ? 'bypass' : 'false-rejection'
+      if (here === 'false-rejection' && strictOnly) return false
+      return verdict ? here === verdict : true
+    }
     return !deepEqual(subject.value, oracle.value)
   }
 }

@@ -3,6 +3,18 @@
 Written 4 Oct 2026, ~07:15 IST. Build window opens **10:00 IST**, closes **22:00 IST**.
 Results 5 Oct, 20:30 IST.
 
+> **Updated 4 Oct 07:50 IST** — §0.1 blocker **closed**: the validator oracle is
+> built and verified, and it finds a real coercion bypass with the false-positive
+> rate intact. §10 re-sequenced.
+> **Clock now: 07:50 IST. 2h10m to the 10:00 window opening, 14h10m to the 22:00 deadline.**
+>
+> *Note on timestamps:* §0.2 was headed "12:48 IST", which was a local-clock
+> reading mislabelled as IST. This machine runs UTC+0 (local 13:17 = IST 07:47),
+> a 5h30m offset. All times in this document are true IST.
+>
+> Prior note: §0.2 added (session fixes + corrected status), §1.4 git staleness
+> corrected, §10 re-sequenced against the clock.
+
 ---
 
 ## 0. Verified status, empirically checked 07:30 IST
@@ -20,7 +32,7 @@ Rather than assume the existing build works, it was exercised directly.
 | `GET /` (production mode) | HTTP 200, SPA served from `dist` |
 | `POST /api/analyze` | works on value-returning functions |
 
-### 0.1 The one gap that decides Phase 1
+### 0.1 The gap that decided Phase 1 — now closed
 
 Testing the actual CYBER-02 use case found this:
 
@@ -38,18 +50,97 @@ security validator returns `null` or an error *string* — `if (q <= 0) return "
 positive"`. There is no reference implementation of "the correct error message for
 input q", so nothing to differ against, so nothing to shrink.
 
-Until this is built, the most valuable security demo (the NaN bypass) does not run.
-Everything else in the plan assumes it works.
+~~Until this is built, the most valuable security demo does not run.~~ **Built and
+verified 08:45 IST.** See below.
 
-**The fix has a clean shape:** a validator oracle does not compare outputs, it
-compares *acceptance*. Rewrite the subject's rule as an explicit reference policy
-(`accept(q) = q > 0 && q <= 100`), then flag any input where `validateQty(q) === null`
-disagrees with `accept(q)`. That is a bypass by definition, and it reuses the
-existing generator, shrinker and reporter unchanged. This is roughly a day of the
-available window, not a rewrite.
+**The fix that shipped:** a validator oracle does not compare outputs, it compares
+*acceptance*. The policy is stated explicitly as a reference function, and any input
+where the validator's verdict disagrees with the policy is reported, with the two
+directions named separately (`bypass` vs `false-rejection`) because only one of them
+is something a reviewer has to act on.
+
+Verified behaviour:
+
+| Subject | Policy | Result |
+|---|---|---|
+| `validateQty` — `if (q <= 0)` / `if (q > 100)` | integers 1..100 | `validateQty(true)` — **bypass**, `expected: reject, actual: accept` |
+| `isValidAge` — `if (a < 0)` / `if (a > 120)` | age preset | `isValidAge(null)` — **bypass** |
+| `checkPort` — `Number.isInteger` then range | port preset | **no counterexample** — 0% false positive preserved |
+
+The mechanism is type coercion, not the `NaN` case originally predicted: `true`,
+`null` and `""` all compare false against both bounds, so the check passes them. The
+shrinker settles on `true` because it is the plainest such value. This is a more
+classic bypass than `NaN` and the demo is honest about what it found.
+
+The policy is written by hand rather than derived from the subject's own AST, and
+that is deliberate: in `if (q <= 0) return "must be positive"` those comparisons are
+*rejection* guards, so reading them as acceptance bounds inverts the rule and would
+produce an oracle that falsely accuses correct validators. Guessing a security
+policy from the code it is meant to police is the wrong direction of trust.
+
+Regression-checked after the change: typecheck clean, selftest 13/13, benchmark
+unchanged at 95% / 0% / 70%.
 
 Note this is also the honest demonstration of ReDoS and inverted auth comparisons:
 those are *disagreement* bugs, which the existing oracle machinery already handles.
+
+### 0.2 Session update — 07:20 IST
+
+> **Superseded in part.** The finding below — that `analyzeWithoutOracle` does not
+> solve the validator case — was correct when written, and `analyzeWithoutOracle`
+> indeed does not solve it. The validator oracle described in §0.1 has since been
+> built directly and verified, so task 1.3 is now **done**, not pending. The four
+> defect fixes below all stand.
+
+**At the time of writing, the §0.1 blocker was still the blocker.**
+`analyzeWithoutOracle` (below) was
+added and does **not** solve it: a validator returns a string or `null`, so it
+neither crashes nor hangs, and it will fall through to the honest dead end.
+Task **1.3 was the single highest-value engineering item**.
+
+Four defects found and fixed, all verified:
+
+| # | Defect | Severity | Status |
+|---|---|---|---|
+| A | `JSON.stringify` silently maps `Infinity`/`-Infinity`/`NaN` → `null`. The API and **two shipped gallery cards** reported `"expected": null, "actual": null` — a counterexample that does not look like one. `sandbox.js` already documented this exact hazard for the generated call string; the guard was never applied at the JSON boundary. | **High** — the flagship demo card contradicted itself | **Fixed.** New `server/engine/json-safe.js`, applied at the single serialization point; decode in `web/src/lib/format.ts`; snapshot regenerated |
+| B | Any function without a library oracle returned `oracle-missing` in **~24 ms without running at all**, while its own message promised it could "detect crashes and timeouts". The product broke its own promise in its own words. | **High** — fails the moment a judge types their own function | **Partly fixed.** `analyzeWithoutOracle()` now hunts and shrinks provable crash/hang defects. Verified: `JSON.parse` → `parseUserAge(null)` `TypeError`; `while(true)` → non-termination; *wrong-answer* fn → correctly refuses to guess |
+| C | `app.set('trust proxy')` was never set, so behind Render's proxy `req.ip` is the proxy address and **every judge shares one 30-runs/minute bucket** → 429s while several judges click Run simultaneously. | **Medium** — bites *during* judging | **Fixed** in `server/index.js`. Verified: limiter still fires exactly at request 31 |
+| D | Three checkable false claims in the hero: "in your browser" (it runs server-side in `node:vm`), "writes an independent implementation" (false without an API key), "live result" (it is a build-time snapshot). | **Medium** — a curious judge checks claims | **Fixed**, and the rewrite is *stronger*: the no-key determinism is the differentiator, so the copy now leads with it |
+
+**Corrected repository status** — §1.4 is stale on this point:
+
+```
+$ git remote -v          # EMPTY — never pushed
+$ git log --oneline -1
+fc41abe Initial commit: differential testing engine, web UI and benchmark suite
+```
+
+The repo **exists** and is committed (§10 item 1 is genuinely done). What is
+missing is the **remote**. `SUBMISSION.md` requires a public repository link, and
+`render.yaml` deploys from a git remote — so this single missing thing blocks
+*both* required submission fields. It remains the top blocker.
+
+No deployed URL appears anywhere in the project. The only URL in the repo is the
+placeholder CI badge at `README.md:5`, pointing at `github.com/your-org/counterexample`
+— a 404.
+
+Also fix before submitting: `README.md:5` badge placeholder, `README.md:8-9,77`
+(same false "writes an implementation" claim), and quarantine
+`ALGOTHON26_STRATEGY.md` from anything judge-facing — it is internal strategy and
+contains false claims ("sandboxed in-browser execution (WASM)", "deployed static
+site", "~20 pre-cached oracles", a unified-diff fixer never built, and a
+"300 competitors" line).
+
+---
+
+## 0bis. Not in the official weighting, but real risks
+
+- **Render free tier sleeps.** `render.yaml` sets `plan: free`, which spins down
+  after ~15 min idle with a 30–90s cold start. `SUBMISSION.md`'s "loads in under
+  3 seconds" is **false**. Mitigation is a free GitHub Actions cron on
+  `*/10 * * * *` hitting `/api/health`. ~10 min. Do it after the remote exists.
+- **Demo video.** `DEMO_SCRIPT.md` already exists and §3.1 schedules it. Say
+  **Ctrl+Enter**, not ⌘↵ — the script says ⌘ but the machine is Windows.
 
 ---
 
@@ -114,11 +205,12 @@ $ date (IST)
 Sun Oct  4 07:00:43 IST 2026
 ```
 
-1. **This directory is not a git repository.** The submission explicitly requires a
-   *source-code repository link*. Right now there is no submission artifact at all.
-   This is the number-one blocker and it is not close.
-2. **The build window has not opened yet.** It is 07:00 IST; the window opens at
-   10:00. We are not behind — we have ~2h45m of preparation time. Good.
+1. **~~This directory is not a git repository.~~** **RESOLVED 07:xx.** `git init`
+   ran and the tree is committed (`fc41abe`, 52 files). See §0.2 — the repo is
+   real; it has simply **never been pushed**, which is the remaining form of this
+   blocker.
+2. **~~The build window has not opened yet.~~** **RESOLVED.** It is 12:48 IST;
+   the window opened at 10:00 and we are 2h48m in, on schedule.
 
 Also unverified: whether anything is actually deployed. `render.yaml` exists, but
 Render deploys from a git remote and there is no git remote.
@@ -242,12 +334,12 @@ These are theme-independent and block everything else.
 |---|---|---|
 | 1.1 | Lock PS: ALG-CYBER-02, stated in README | Explicit |
 | 1.2 | Build vulnerable target app: weak validator, ReDoS password regex, NaN-bypass quantity check | Engine finds all three |
-| 1.3 | **Validator (acceptance-disagreement) oracle** — the blocking task from §0.1 | `validateQty` finds its NaN bypass instead of `oracle-missing` |
-| 1.4 | Add 3–4 security rules as domain oracles | Passing selftest |
+| 1.3 | ~~Validator (acceptance-disagreement) oracle~~ **done** — see §0.1 | `validateQty(true)` reported as a bypass |
+| 1.4 | Wire the policy selector into the web UI so the demo is one click | Judge reaches the bypass without typing policy JSON |
 | 1.5 | Extend benchmark: security cases + correct-validator controls | FP stays 0% |
 | 1.6 | End-to-end audit UI: paste validator → get bypass + minimal input + suggested fix | One screen, no setup |
 
-Task 1.3 is first for a reason: without it, 1.2 and 1.6 have nothing to demo.
+Task 1.3 is done; 1.4 and 1.6 now have something to demo.
 
 ### Phase 2 — Evidence, 17:00 → 20:00
 | # | Task |
@@ -307,10 +399,29 @@ Binding. Each is a real want that does not earn points against the weighting.
 
 ## 10. Immediate next actions
 
-1. ~~`git init` + first commit~~ **done** — 52 files, 12,188 lines, committed locally.
-2. **Create the GitHub repo and push** (needs your account — cannot be done from here).
-3. Deploy and verify the public URL cold.
-4. Build the validator oracle from §0.1 and prove it finds the NaN bypass.
+Re-sequenced at **07:50 IST**. 2h10m remain before the window opens.
 
-Item 2 is the last remaining hard blocker: there is no repository *link* until the
-remote exists, and the submission requires one.
+1. ~~`git init` + first commit~~ **done** — 52 files, 12,188 lines, committed locally (`fc41abe`).
+2. **Create the public GitHub repo and push.** *Needs your account — cannot be done from here.*
+   ```powershell
+   git remote add origin https://github.com/<you>/<repo>.git
+   git push -u origin master
+   ```
+   This unblocks **both** remaining hard blockers: the submission's repository
+   link *and* the Render deploy.
+3. **Deploy, then verify cold and logged-out with no API keys set.** Check the two
+   previously-corrupted gallery cards (`max-empty-array`, `second-largest-duplicates`)
+   no longer read `null` / `null` — if they do, the deploy is stale.
+4. ~~**Task 1.3 — the validator oracle.**~~ **DONE (07:50 IST).** Built and verified:
+   it reports `validateQty(true)` as a `bypass` (`expected: reject, actual: accept`,
+   class `validation-bypass`), and a correctly-written validator still produces no
+   false positive. The mechanism is type coercion rather than `NaN` — `true`, `null`
+   and `""` all compare false against both bounds. See §0.1. Typecheck clean,
+   selftest 13/13, benchmark unchanged at 95% / 0% / 70%.
+5. **Next engineering item:** wire the policy selector into the web UI (task 1.4) so
+   the bypass is reachable in one click rather than by pasting policy JSON. This is
+   now the top of the list, because a demo a judge cannot reach unaided does not
+   move the 30% criterion.
+
+Items 2 and 3 are the only things that can still produce a zero. Item 5 is the only
+remaining thing that meaningfully raises the score.

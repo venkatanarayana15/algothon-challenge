@@ -279,6 +279,82 @@ function binarySearch(nums, target) {
 ]
 
 /**
+ * Security validators.
+ *
+ * These are the ALG-CYBER-02 cases, and they behave differently from everything
+ * above: a validator has no right answer to compare against, only a rule. So
+ * they are held to a policy derived from their own comparisons rather than to a
+ * reference implementation, and the finding is a *bypass* -- an input the rule
+ * forbids that the check let through.
+ *
+ * `oracleSignature` is empty on purpose. Leaving it blank is what lets the
+ * engine recognise the validator from its shape; naming a value oracle here
+ * would compare a range check against `isPrime` and report nonsense.
+ */
+export const SECURITY_EXAMPLES = [
+  {
+    id: 'validate-qty-nan-bypass',
+    title: 'Quantity check that NaN walks straight through',
+    difficulty: 'easy',
+    language: 'JavaScript',
+    oracleSignature: '',
+    spec: 'Accept a quantity only if it is a whole number from 1 to 100. Return null when accepted, otherwise an error message.',
+    tags: ['security', 'validation bypass', 'NaN', 'OWASP A03'],
+    bugClass: 'Missing type and finiteness guard',
+    code: `// POST /cart/items  ->  null | error string
+function validateQty(q) {
+  if (q <= 0) return 'must be positive';
+  if (q > 100) return 'too many';
+  return null;
+}`,
+    counterexample: 'validateQty(NaN)',
+    rootCause:
+      'Every comparison with NaN is false, so both guards fall through and the function returns null — meaning accepted. A range check written this way rejects -1 and 1e9 while waving through NaN, which then flows into arithmetic and poisons the total.',
+    fix: 'Reject non-numbers before the range test: `if (typeof q !== "number" || !Number.isFinite(q)) return "not a number";`',
+  },
+  {
+    id: 'validate-age-nan-bypass',
+    title: 'Age gate that Infinity and "25" both pass',
+    difficulty: 'medium',
+    language: 'JavaScript',
+    oracleSignature: '',
+    spec: 'Accept an age only if it is a whole number from 0 to 120. Return null when accepted, otherwise an error message.',
+    tags: ['security', 'validation bypass', 'type confusion', 'OWASP A03'],
+    bugClass: 'Missing type guard',
+    code: `// signup  ->  null | error string
+function validateAge(age) {
+  if (age < 0) return 'age cannot be negative';
+  if (age > 120) return 'implausible age';
+  return null;
+}`,
+    counterexample: 'validateAge(NaN)',
+    rootCause:
+      'The string "25" also passes, because JavaScript coerces it for both comparisons. The check constrains a range without ever establishing that it was given a number, so non-numeric values are coerced into looking valid.',
+    fix: 'Establish the type first: `if (typeof age !== "number" || !Number.isFinite(age)) return "not a number";`',
+  },
+  {
+    id: 'validate-port-range-bypass',
+    title: 'Port validator with no upper bound for non-numbers',
+    difficulty: 'medium',
+    language: 'JavaScript',
+    oracleSignature: '',
+    spec: 'Accept a port only if it is a whole number from 1 to 65535. Return null when accepted, otherwise an error message.',
+    tags: ['security', 'validation bypass', 'NaN', 'input validation'],
+    bugClass: 'Missing finiteness guard',
+    code: `// service config  ->  null | error string
+function validatePort(port) {
+  if (port < 1) return 'port must be positive';
+  if (port > 65535) return 'port out of range';
+  return null;
+}`,
+    counterexample: 'validatePort(NaN)',
+    rootCause:
+      'The bounds are right, so this reads as correct on inspection. But NaN satisfies neither comparison, so an undefined port reaches the client as an accepted value and the failure surfaces later, somewhere unrelated.',
+    fix: 'Reject NaN explicitly: `if (!Number.isFinite(port)) return "not a number";`',
+  },
+]
+
+/**
  * The provenance case: a faithful reproduction of a class of bug that shipped
  * and survived review because the failing input was never written down.
  * No proprietary source is quoted -- the shape is the point.
