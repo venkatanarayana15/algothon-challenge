@@ -258,6 +258,35 @@ building it.
 Test-suite generation from a spec · coverage measurement · accounts, history
 and sharing · non-JavaScript languages · multi-file analysis.
 
+## Disclosure
+
+Stated plainly, because it is asked for and because the demo depends on it.
+
+**External APIs — none required, three optional.** The deterministic core calls
+no external service: no network request is made to analyse a function, and the
+demo works with every key unset (verified in CI and from a clean clone). Three
+optional free-tier model providers are supported — Gemini, Groq, OpenRouter —
+and are used only if you supply a key, for an extra independent oracle on
+functions outside the built-in library and for a written root-cause sentence.
+The first key found wins; the tool degrades to heuristics when none is present.
+
+**Datasets — none.** No external dataset is used, downloaded, or bundled. Every
+seeded example, benchmark case and oracle is hand-written for this project. The
+two generated files in `web/src/data/` (`snapshot.json`, `benchmark.json`) are
+produced by running *this* engine over *these* seeded cases; CI regenerates them
+and fails if anything reproducible changes.
+
+**AI-assisted components.** The engine, the oracles, the benchmarks, the web UI
+and the documentation were written by hand. The codebase contains no generated or
+copied model output. A model can optionally be consulted at runtime for an
+oracle or a sentence of prose, as described above — never for detection,
+classification or any number reported in the benchmark.
+
+**Third-party code.** Runtime dependencies are `express`, `acorn` and
+`acorn-walk`. The front end is built with `react`, `react-dom`, `vite`,
+`typescript` and `tailwindcss`. Input generation, the sandbox, the shrinker, the
+oracle library and the benchmark suite are all first-party.
+
 ## Why differential testing
 
 Property-based testing needs an oracle, and "the expected output" is the hard

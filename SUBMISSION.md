@@ -68,6 +68,18 @@ Paste-ready, in the order below. Keep the pitch under 120 characters.
 | Tech stack | React · TypeScript · Node · Express · acorn · Tailwind |
 | One-line pitch | as above |
 
+**Disclosure** (if the form has a box for it)
+
+> No external APIs are required — the demo runs with every model key unset, and
+> that is verified in CI. Three optional free-tier providers (Gemini, Groq,
+> OpenRouter) are supported only if a key is supplied, used solely for an extra
+> oracle and a written explanation. No datasets are used; every seeded example,
+> benchmark case and oracle is hand-written, and the generated JSON in
+> `web/src/data/` comes from running this engine over these cases. All code,
+> oracles, benchmarks and docs are hand-written, with no generated model output
+> in the codebase. Runtime dependencies: `express`, `acorn`, `acorn-walk`; the
+> front end is React + TypeScript + Tailwind.
+
 ## T-minus 10 minutes: final link check
 
 Open every link **in incognito**, one by one. Not in a normal window — you want
