@@ -118,6 +118,15 @@ export default function App() {
   const [history, setHistory] = useState<RunRecord[]>([])
   /** Source held while an applied guard is in place, so it can be restored. */
   const [previousCode, setPreviousCode] = useState<string | null>(null)
+  /**
+   * The witness the guard was applied to close.
+   *
+   * A clean retest after a fix must name what it verified, otherwise the loop
+   * closes with a generic "nothing found" that treats a repaired bug the same
+   * as a first-time clean scan. Captured from the report being fixed, because
+   * the retest overwrites it.
+   */
+  const [fixWitness, setFixWitness] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   /** The short result sheet, shown when a run the visitor asked for finishes. */
@@ -263,26 +272,30 @@ export default function App() {
    * point: it is what turns "I applied a fix" into "the bypass no longer
    * reproduces", and the two runs land in the trail next to each other.
    */
-  const applyFix = useCallback(async () => {
+const applyFix = useCallback(async () => {
     if (!fix) return
     const next = fix.apply(code)
     if (!next) {
       push('Could not locate the function body to insert the guard into.', 'warn')
       return
     }
+    // Keep the witness the guard exists to close. The retest describes the
+    // guarded source, so without this the verified state cannot name it.
+    setFixWitness(report?.finding?.call ?? report?.minimal?.call ?? null)
     setPreviousCode(code)
     setCode(next)
-    push('Guard applied as the first statement — retesting now.')
+    push('Guard applied as the first statement - retesting now.')
     await run({ code: next }, 'fix')
-  }, [fix, code, run, push])
+  }, [fix, code, report, run, push])
 
-  const revertFix = useCallback(() => {
+const revertFix = useCallback(() => {
     if (previousCode === null) return
     setCode(previousCode)
     setPreviousCode(null)
+    setFixWitness(null)
     // The report described the guarded source, so it no longer applies.
     setReport(null)
-    push('Original source restored — run it again to see the bypass return.', 'warn')
+    push('Original source restored - run it again to see the bypass return.', 'warn')
   }, [previousCode, push])
 
   const copyText = useCallback(
@@ -529,7 +542,11 @@ export default function App() {
                     )}
                     {report.status === 'no-counterexample-found' && (
                       <>
-                        <CleanState report={report} />
+                        {previousCode !== null && fixWitness ? (
+                          <FixVerified report={report} witness={fixWitness} onRevert={revertFix} />
+                        ) : (
+                          <CleanState report={report} />
+                        )}
                         <PhaseTrace report={report} />
                       </>
                     )}
@@ -652,6 +669,60 @@ function CleanState({ report }: { report: AnalysisReport }) {
           <p className="font-mono text-lg text-white">{report.stats.agreements.toLocaleString()}</p>
         </div>
       </div>
+    </section>
+  )
+}
+
+/**
+ * The loop, closed.
+ *
+ * A plain clean scan and a clean retest after a fix are different events and
+ * must not read the same. This names the witness the guard was applied to
+ * close, shows a fresh search confirming nothing breaks the rule now, and
+ * keeps the standard caveat: absence in a search is not a proof.
+ *
+ * It borrows CleanState's honest framing rather than inventing a victory
+ * state, because "your fix worked" without the numbers behind it would be a
+ * green checkmark with better marketing.
+ */
+function FixVerified({
+  report,
+  witness,
+  onRevert,
+}: {
+  report: AnalysisReport
+  witness: string
+  onRevert: () => void
+}) {
+  return (
+    <section className="panel-raised animate-fade-up border-emerald-500/20 p-6">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15">
+          <svg viewBox="0 0 16 16" className="h-3 w-3 fill-none stroke-emerald-400 stroke-[2]">
+            <path d="M3 8.5l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <h3 className="text-sm font-semibold text-white">Your fix held</h3>
+      </div>
+
+      <code className="block break-words rounded-lg border border-white/[0.06] bg-ink-900/70 px-3.5 py-2.5 font-mono text-[13px] text-slate-200">
+        {witness}
+      </code>
+      <p className="mt-3 text-[14px] leading-relaxed text-slate-400">
+        That input broke the rule before the guard. A fresh search of{' '}
+        {report.stats.inputsTested.toLocaleString()} inputs against{' '}
+        <span className="text-slate-300">{report.oracle.signature}</span> found nothing that breaks it
+        now. <span className="font-medium text-amber-300/90">This is not a proof of correctness</span>{' '}
+        — only that this search did not defeat the guarded version.
+      </p>
+
+      <button
+        type="button"
+        onClick={onRevert}
+        className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-300"
+      >
+        Revert the fix to see the bypass return
+      </button>
     </section>
   )
 }
