@@ -167,8 +167,8 @@ against the vulnerable version**, and `npm run verify:regression-test` proves
 both halves by swapping the fixes back out:
 
 ```
-ok   patched source: 15 passing
-ok   vulnerable source: 3 failing (one per finding)
+ok   patched source: 16 passing
+ok   vulnerable source: 4 failing (one per finding, plus the access case the fix restores)
 ok   3 finding tests fail and 1 access case the fix restores also fails on vulnerable code
 ok   the other 12 legitimate-behaviour tests stay green against vulnerable code
 ok   the committed suite matches what the audit generates today
@@ -234,7 +234,7 @@ test:e2e` boots that same server on its own port, so run it after a build too.
 
 Every verification command prints a table and exits non-zero on failure.
 
-The five checks are deliberately different from each other, because passing one
+The six checks are deliberately different from each other, because passing one
 says nothing about the others:
 
 | Command | What it actually proves |
@@ -403,8 +403,9 @@ building it.
 
 ## Deliberately not built
 
-Test-suite generation from a spec · coverage measurement · accounts, history
-and sharing · non-JavaScript languages · multi-file analysis.
+Test-suite generation from a spec · coverage measurement · accounts and
+cross-session history (sharing, repro links and export are built) · non-JavaScript
+languages · multi-file analysis.
 
 ## Disclosure
 

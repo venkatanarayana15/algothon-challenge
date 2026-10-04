@@ -126,5 +126,5 @@ if (process.env.NODE_ENV === 'production') {
 const port = Number(process.env.PORT ?? 3001)
 app.listen(port, () => {
   const llm = getLlmConfig()
-  console.log(`counterexample api listening on :${port}  (llm: ${llm?.name ?? 'none, heuristics only'})`)
+  console.log(`a2z-cyber api listening on :${port}  (llm: ${llm?.name ?? 'none, heuristics only'})`)
 })

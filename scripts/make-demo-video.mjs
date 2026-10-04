@@ -35,7 +35,7 @@ const BEATS = [
     id: 'title',
     hold: 6,
     caption:
-      'COUNTEREXAMPLE — paste your code, get the smallest input that breaks it.\n' +
+      'A2Z Cyber — paste your code, get the smallest input that breaks it.\n' +
       'Problem statement ALG-CYBER-02: secure the application.',
     note: 'Opening title. Names the tool and the problem statement in one breath.',
   },
@@ -158,7 +158,7 @@ const BEATS = [
     id: 'end',
     hold: 8,
     caption:
-      'COUNTEREXAMPLE — deterministic adversarial testing for JavaScript.\n' +
+      'A2Z Cyber — deterministic adversarial testing for JavaScript.\n' +
       'No API key. Paste your code and find the input that breaks it.',
     note: 'Closing card. Repeat the promise.',
   },

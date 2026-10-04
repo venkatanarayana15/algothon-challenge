@@ -37,8 +37,8 @@ Then, from the **deployed URL** (not localhost), in an incognito window:
 - [ ] **⌘K** opens the palette, and the mobile bottom bar appears when you narrow the
       window (the side rail should disappear at the same time)
 - [ ] In the **audit** section, click **Download the regression test** → open
-      `security-regression.test.mjs` and run `node --test` on it → 15 passing. Say out
-      loud that the same file fails 3 against the unpatched code; that is the proof it is
+      `security-regression.test.mjs` and run `node --test` on it → 16 passing. Say out
+      loud that the same file fails 4 against the unpatched code; that is the proof it is
       a regression test rather than a description.
 - [ ] Gallery renders all 16 cards, filters work (3 security validators first)
 - [ ] Benchmark section renders with the three headline numbers
