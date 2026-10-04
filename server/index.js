@@ -6,6 +6,7 @@ import { AnalysisError } from './engine/analyze.js'
 import { getLlmConfig } from './engine/llm.js'
 import { toJsonSafe } from './engine/json-safe.js'
 import { EXAMPLES, SECURITY_EXAMPLES } from './examples.js'
+import { auditTarget } from './target/audit.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -49,6 +50,26 @@ app.get('/api/examples', (_req, res) => {
   // Security validators first: they are the ALG-CYBER-02 headline, and a judge
   // reaching for an example should meet a bypass before an off-by-one.
   res.json({ examples: [...SECURITY_EXAMPLES, ...EXAMPLES] })
+})
+
+/**
+ * The ALG-CYBER-02 workflow, end to end: audit the deliberately vulnerable
+ * application, fix each finding, and prove the fix held without breaking
+ * legitimate functionality.
+ *
+ * Read-only and self-contained. It compiles the target and the patched versions
+ * in a `node:vm` sandbox, so nothing here touches a real server or database --
+ * which is what makes the demonstration safe by construction rather than by
+ * promise. Deliberately not rate-limited, because it is a fixed, bounded audit
+ * with no user input, and it takes ~10s.
+ */
+app.get('/api/audit', async (_req, res) => {
+  try {
+    res.json(await auditTarget({ budgets: 2500 }))
+  } catch (err) {
+    console.error('[audit] failed:', err)
+    res.status(500).json({ error: 'The audit failed to complete.', kind: 'internal' })
+  }
 })
 
 app.post('/api/analyze', rateLimit, async (req, res) => {

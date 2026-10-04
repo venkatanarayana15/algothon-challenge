@@ -140,6 +140,48 @@ site", "~20 pre-cached oracles", a unified-diff fixer never built, and a
 
 ## 0bis. Not in the official weighting, but real risks
 
+### 0ter. ALG-CYBER-02 workflow built — 16:35 IST
+
+The PS text requires working on a **web application** and lists six must-haves. Three
+were unmet, and two of them are named in the judging focus (*"quality of fixes and
+regression testing"*). Closed by `server/target/` (task 1.2 + 1.6 from §4):
+
+| Must-have | Before | Now |
+|---|---|---|
+| Authentication / input inspection | input only | input **and** an access-control predicate (V3) |
+| Vulnerability identification | ✅ | ✅ |
+| Safe demonstration | ✅ | ✅ plus `npm run audit` / `GET /api/audit` |
+| **Secure fixes** | ❌ | ✅ a real patch per finding, compiled and executed |
+| **Retesting** | ❌ | ✅ same attack re-run after the fix |
+| **Root-cause documentation** | partial | ✅ prose root cause per finding, expandable in the UI |
+
+`npm run audit` (or `GET /api/audit`, ~7s) runs the whole loop:
+
+```
+V1  validateQty(NaN)              accepted 1ms -> rejected 1ms      6/6 legit   FIXED_AND_VERIFIED
+V2  isStrongEnoughPassword(redos) hung 1509ms  -> returned 1ms      3/3 legit   FIXED_AND_VERIFIED
+V3  authorize("user", 0)          accepted 0ms -> rejected 1ms      3/3 legit   FIXED_AND_VERIFIED
+Regression: 12/12 legitimate cases pass, 0 broken by the fixes, functionality preserved: yes
+```
+
+Design points worth keeping if this is touched again:
+
+- **The fix is verified behaviourally, not textually.** Each patched function is
+  compiled and run in the same `node:vm` sandbox as the audit, so a patch that looks
+  right but breaks the app fails.
+- **A fix that *improves* legitimate behaviour is not counted as a regression.** Only a
+  case that passed before and fails after counts — otherwise a correct patch gets
+  penalised.
+- **Detection is reported honestly.** V1 is found automatically by the policy oracle; V2
+  and V3 are confirmed against a supplied attack, because a ReDoS trigger and an inverted
+  comparison both need knowledge a fuzzer cannot synthesise from source. This is how real
+  testing works, and claiming otherwise would be the exact kind of overclaim §0.2 removed.
+- **Safe by construction.** The target is framework-free and compiled in a sandbox; an audit
+  never sends a request to a real service.
+
+Now in the product: `AuditPanel.tsx` renders it above the fold area, and the hero leads with
+the V1 bypass. The original analyser still works alongside it (paste a validator → bypass).
+
 - **Render free tier sleeps.** `render.yaml` sets `plan: free`, which spins down
   after ~15 min idle with a 30–90s cold start. `SUBMISSION.md`'s "loads in under
   3 seconds" is **false**. Mitigation is a free GitHub Actions cron on
