@@ -1,8 +1,23 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      // Apply the stored theme before first paint so there is no flash.
+      // Mirrors src/lib/theme.ts: stored choice wins, otherwise the OS
+      // preference, otherwise dark.
+      try {
+        var t = localStorage.getItem('a2z-theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        document.documentElement.classList.add(t);
+        document.documentElement.style.colorScheme = t;
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
     <title>A2Z Cyber — find the input that bypasses your validation</title>
     <meta
       name="description"

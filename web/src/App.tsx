@@ -5,6 +5,7 @@ import { analyze, fetchExamples, fetchHealth, RequestError } from './lib/api'
 import type { EngineHealth } from './lib/api'
 import { findPolicy } from './lib/policies'
 import { NAV_IDS, NAV_SECTIONS, scrollToSection } from './lib/nav'
+import { useTheme } from './lib/theme'
 import { useScrollSpy } from './hooks/useScrollSpy'
 import {
   buildShareUrl,
@@ -37,6 +38,7 @@ import { Pipeline, HonestLimits } from './components/Pipeline'
 import { BenchmarkMatrix } from './components/BenchmarkMatrix'
 import { CounterexampleCard } from './components/CounterexampleCard'
 import { LoopSteps } from './components/LoopSteps'
+import { SessionStats } from './components/SessionStats'
 import { ResultSheet } from './components/ResultSheet'
 import { PhaseTrace } from './components/PhaseTrace'
 import { MutationPanel } from './components/MutationPanel'
@@ -128,6 +130,7 @@ export default function App() {
    * the retest overwrites it.
    */
   const [fixWitness, setFixWitness] = useState<string | null>(null)
+  const { theme, toggle: toggleTheme } = useTheme()
   const resultsRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   /** The short result sheet, shown when a run the visitor asked for finishes. */
@@ -211,6 +214,7 @@ export default function App() {
             call: result.minimal?.call ?? result.finding?.call ?? null,
             verdict: result.finding?.verdict,
             analysisMs: result.analysisMs,
+            inputsTested: result.stats.inputsTested,
           },
         ])
         requestAnimationFrame(() => {
@@ -239,15 +243,21 @@ export default function App() {
     [code, functionName, spec, policyId],
   )
 
-  const loadExample = useCallback((example: Example | SnapshotEntry) => {
-    setCode(example.code)
-    setSpec(example.spec ?? '')
-    setFunctionName('')
-    setPolicyId('')
-    setReport(null)
-    setError(null)
-    requestAnimationFrame(() => scrollToSection('try'))
-  }, [])
+  const loadExample = useCallback(
+    (example: Example | SnapshotEntry) => {
+      setCode(example.code)
+      setSpec(example.spec ?? '')
+      setFunctionName('')
+      setPolicyId('')
+      // An example is a promise of a live result, not a typing exercise.
+      // Filling the editor without running leaves the visitor one unexplained
+      // click from the answer, so the example runs immediately with its own
+      // code passed as an override rather than waiting on editor state.
+      void run({ code: example.code, spec: example.spec ?? '' }, 'manual')
+      requestAnimationFrame(() => scrollToSection('try'))
+    },
+    [run],
+  )
 
   /**
    * One click, one complete story: load the vulnerable validator, attack it,
@@ -403,6 +413,16 @@ const revertFix = useCallback(() => {
       })
     }
 
+    actions.push({
+      id: 'theme:toggle',
+      label: theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
+      hint: 'the whole interface, instantly',
+      group: 'Actions',
+      icon: theme === 'dark' ? 'sun' : 'moon',
+      keywords: 'theme light dark mode appearance display brightness',
+      run: () => toggleTheme(),
+    })
+
     if (report) {
       const assertion = regressionAssertion(report)
       if (assertion) {
@@ -488,6 +508,8 @@ const revertFix = useCallback(() => {
     loadExample,
     copyText,
     push,
+    theme,
+    toggleTheme,
   ])
 
   return (
@@ -497,6 +519,8 @@ const revertFix = useCallback(() => {
         health={health}
         isRunning={isRunning}
         canRun={Boolean(code.trim())}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onOpenPalette={() => {
           setShortcutsOpen(false)
           setPaletteOpen(true)
@@ -592,6 +616,7 @@ const revertFix = useCallback(() => {
 
                 {!isRunning && !error && !report && <IdleState />}
 
+                <SessionStats records={history} />
                 <RunTrail records={history} onClear={() => setHistory([])} />
               </div>
             </div>

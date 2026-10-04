@@ -252,9 +252,13 @@ function Finding({ finding }: { finding: AuditFinding }) {
   return (
     <article className="panel-raised overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-ink-850/60 px-5 py-3.5">
-        <div className="flex min-w-0 items-center gap-3">
+        {/* Wraps on a phone: the title used to be the only shrinkable item in a
+            nowrap row, so it was squeezed to a few pixels and read as blank. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <span className="font-mono text-xs font-semibold text-slate-500">{finding.id}</span>
-          <h3 className="min-w-0 truncate text-sm font-semibold text-white">{finding.title}</h3>
+          <h3 className="min-w-0 basis-full truncate text-sm font-semibold text-white sm:basis-auto">
+            {finding.title}
+          </h3>
           <code className="shrink-0 font-mono text-[11px] text-rose-300/90">{finding.endpoint}</code>
           <span className="chip">{finding.owasp}</span>
         </div>

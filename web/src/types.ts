@@ -148,6 +148,8 @@ export interface RunRecord {
   call?: string | null
   verdict?: 'bypass' | 'false-rejection'
   analysisMs: number
+  /** Inputs the engine tried, for session totals. Absent on runs that failed. */
+  inputsTested?: number
 }
 
 /** One finding from the ALG-CYBER-02 audit of the target application. */

@@ -41,7 +41,11 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
     <header id="overview" className="relative overflow-hidden">
       <div className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
-          <div className="animate-fade-up">
+          {/* min-w-0 on both columns: a grid item's default min-width is its
+              min-content, and the headline card's header is nowrap (truncate),
+              so without this the single column track resolves to ~440px and
+              the hero is silently clipped on a phone. */}
+          <div className="min-w-0 animate-fade-up">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -106,7 +110,7 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
           </div>
 
           {headline && (
-            <div className="animate-fade-up [animation-delay:120ms]">
+            <div className="min-w-0 animate-fade-up [animation-delay:120ms]">
               <div className="panel-raised relative overflow-hidden">
                 <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
                   <div className="flex min-w-0 items-center gap-2">

@@ -10,6 +10,8 @@ interface Props {
   onOpenPalette: () => void
   onRun: () => void
   onOpenShortcuts: () => void
+  theme: 'dark' | 'light'
+  onToggleTheme: () => void
 }
 
 /**
@@ -25,6 +27,8 @@ export function TopBar({
   onOpenPalette,
   onOpenShortcuts,
   onRun,
+  theme,
+  onToggleTheme,
 }: Props) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-md">
@@ -85,6 +89,20 @@ export function TopBar({
               text-slate-500 transition hover:border-white/15 hover:text-slate-200"
           >
             <kbd className="font-mono text-[11px] leading-none">?</kbd>
+          </button>
+
+{/* Theme. Icon shows what you will switch to, label names the state for
+              screen readers rather than relying on the glyph. */}
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            data-action="theme"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-1.5 text-xs
+              text-slate-500 transition hover:border-white/15 hover:text-slate-200"
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-3.5 w-3.5" />
           </button>
 
           <button

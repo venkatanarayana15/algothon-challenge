@@ -127,6 +127,206 @@
   .gradient-rose {
     @apply bg-gradient-to-r from-rose-400 via-rose-300 to-amber-300 bg-clip-text text-transparent;
   }
+
+  /*
+   * Light theme. Every override is scoped under `.light` on <html>, so each
+   * selector wins over the dark utility by specificity alone -- no !important,
+   * no ordering dependence. The mapping is mechanical: ink surfaces become
+   * white/slate, white text becomes slate-900, muted slate steps down until it
+   * passes 4.5:1 on white, and accent text moves two steps darker for the same
+   * reason. Tinted alert washes get slightly stronger because a 5% wash that
+   * reads clearly on near-black vanishes on white.
+   */
+  .light {
+    color-scheme: light;
+  }
+
+  .light body {
+    @apply bg-slate-100 text-slate-800;
+  }
+
+  .light body::before {
+    background-image:
+      linear-gradient(to right, rgba(100, 116, 139, 0.14) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(100, 116, 139, 0.14) 1px, transparent 1px);
+  }
+
+  .light ::selection {
+    @apply bg-rose-200 text-rose-900;
+  }
+
+  .light :focus-visible {
+    @apply ring-offset-white;
+  }
+
+  /* Surfaces: page is slate, cards are white, wells are slate. */
+  .light .bg-ink-800\/90 {
+    background-color: rgb(226 232 240 / 0.95);
+  }
+  .light .bg-ink-850,
+  .light .bg-ink-850\/40,
+  .light .bg-ink-850\/60 {
+    background-color: #fff;
+  }
+  .light .bg-ink-900,
+  .light .bg-ink-900\/30,
+  .light .bg-ink-900\/40,
+  .light .bg-ink-900\/70 {
+    background-color: #fff;
+  }
+  .light .bg-ink-950\/40,
+  .light .bg-ink-950\/50,
+  .light .bg-ink-950\/60,
+  .light .bg-ink-950\/80,
+  .light .bg-ink-950\/95 {
+    background-color: #f1f5f9;
+  }
+
+  /* Subtle washes become slate instead of white. */
+  .light .bg-white\/\[0\.02\] {
+    background-color: rgb(15 23 42 / 0.03);
+  }
+  .light .bg-white\/\[0\.03\] {
+    background-color: rgb(15 23 42 / 0.04);
+  }
+  .light .bg-white\/\[0\.04\] {
+    background-color: rgb(15 23 42 / 0.05);
+  }
+  .light .bg-white\/\[0\.05\] {
+    background-color: rgb(15 23 42 / 0.06);
+  }
+  .light .bg-white\/\[0\.06\] {
+    background-color: rgb(15 23 42 / 0.07);
+  }
+  .light .bg-white\/\[0\.08\] {
+    background-color: rgb(15 23 42 / 0.09);
+  }
+
+  /* Hairlines stay visible on white by going slightly stronger. */
+  .light .border-white\/\[0\.05\] {
+    border-color: rgb(15 23 42 / 0.08);
+  }
+  .light .border-white\/\[0\.06\] {
+    border-color: rgb(15 23 42 / 0.1);
+  }
+  .light .border-white\/\[0\.07\] {
+    border-color: rgb(15 23 42 / 0.11);
+  }
+  .light .border-white\/\[0\.08\] {
+    border-color: rgb(15 23 42 / 0.13);
+  }
+  .light .border-white\/\[0\.1\] {
+    border-color: rgb(15 23 42 / 0.15);
+  }
+  .light .border-white\/\[0\.12\] {
+    border-color: rgb(15 23 42 / 0.17);
+  }
+  .light .border-white\/10 {
+    border-color: rgb(15 23 42 / 0.14);
+  }
+  .light .border-white\/15 {
+    border-color: rgb(15 23 42 / 0.2);
+  }
+  .light .border-white\/20 {
+    border-color: rgb(15 23 42 / 0.25);
+  }
+  .light .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgb(15 23 42 / 0.08);
+  }
+
+  /* Alert washes need more body on white. */
+  .light .bg-rose-500\/\[0\.05\],
+  .light .bg-rose-500\/\[0\.06\] {
+    background-color: rgb(244 63 94 / 0.08);
+  }
+  .light .bg-emerald-500\/\[0\.05\],
+  .light .bg-emerald-500\/\[0\.07\] {
+    background-color: rgb(16 185 129 / 0.1);
+  }
+
+  /* Text: white becomes ink, muted slate steps down to passing contrast. */
+  .light .text-white {
+    color: #0f172a;
+  }
+  .light .text-slate-100 {
+    color: #1e293b;
+  }
+  .light .text-slate-200 {
+    color: #334155;
+  }
+  .light .text-slate-300 {
+    color: #475569;
+  }
+  .light .text-slate-400 {
+    color: #475569;
+  }
+  .light .text-rose-200,
+  .light .text-rose-300,
+  .light .text-rose-400,
+  .light .text-rose-400\/70 {
+    color: #be123c;
+  }
+  .light .text-emerald-200,
+  .light .text-emerald-300,
+  .light .text-emerald-400,
+  .light .text-emerald-400\/70 {
+    color: #047857;
+  }
+  .light .text-amber-300,
+  .light .text-amber-400 {
+    color: #b45309;
+  }
+  .light .decoration-white\/20 {
+    text-decoration-color: rgb(15 23 42 / 0.25);
+  }
+  .light .decoration-white\/50 {
+    text-decoration-color: rgb(15 23 42 / 0.45);
+  }
+
+  /* Composed component classes carry baked-in dark colors, so they get
+     explicit light versions rather than relying on utility overrides. */
+  .light .panel {
+    @apply border-slate-900/10 bg-white;
+  }
+  .light .panel-raised {
+    @apply border-slate-900/10 bg-white shadow-xl shadow-slate-900/10;
+  }
+  .light .chip {
+    @apply border-slate-900/10 bg-slate-900/[0.04] text-slate-600;
+  }
+  .light .code-area {
+    @apply text-slate-800;
+  }
+  .light .gradient-text {
+    @apply bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent;
+  }
+  .light .gradient-rose {
+    @apply bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 bg-clip-text text-transparent;
+  }
+
+  /* Hover states that assume a dark surface invert to ink on light. */
+  .light .hover\:text-white:hover {
+    color: #0f172a;
+  }
+  .light .hover\:text-slate-100:hover {
+    color: #1e293b;
+  }
+  .light .hover\:text-slate-200:hover {
+    color: #334155;
+  }
+  .light .hover\:text-slate-300:hover {
+    color: #475569;
+  }
+  .light .hover\:bg-white\/\[0\.03\]:hover {
+    background-color: rgb(15 23 42 / 0.04);
+  }
+  .light .hover\:bg-white\/\[0\.05\]:hover {
+    background-color: rgb(15 23 42 / 0.06);
+  }
+
+  .light *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
