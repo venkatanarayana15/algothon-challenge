@@ -5,6 +5,54 @@ Results 5 Oct, 20:30 IST.
 
 ---
 
+## 0. Verified status, empirically checked 07:30 IST
+
+Rather than assume the existing build works, it was exercised directly.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | clean |
+| `npm run selftest` | **13/13** produce a counterexample |
+| `npm run benchmark` | 95% detection, **0% false positives**, 70% class accuracy — stable across 3 consecutive runs |
+| `npm run check:data` | passes |
+| `GET /api/health` | `{"ok":true,"llm":null}` — graceful degradation confirmed |
+| `GET /api/examples` | 12 examples |
+| `GET /` (production mode) | HTTP 200, SPA served from `dist` |
+| `POST /api/analyze` | works on value-returning functions |
+
+### 0.1 The one gap that decides Phase 1
+
+Testing the actual CYBER-02 use case found this:
+
+```
+POST /api/analyze  { code: "function validateQty(q) { if (q <= 0) ... }" }
+-> { "status": "oracle-missing" }
+```
+
+The engine returns `oracle-missing` for a validator. **This is the single most
+important engineering task in the plan.**
+
+The reason is structural, and worth stating precisely: every oracle we have assumes
+the subject returns a *value* that a reference implementation can also produce. A
+security validator returns `null` or an error *string* — `if (q <= 0) return "must be
+positive"`. There is no reference implementation of "the correct error message for
+input q", so nothing to differ against, so nothing to shrink.
+
+Until this is built, the most valuable security demo (the NaN bypass) does not run.
+Everything else in the plan assumes it works.
+
+**The fix has a clean shape:** a validator oracle does not compare outputs, it
+compares *acceptance*. Rewrite the subject's rule as an explicit reference policy
+(`accept(q) = q > 0 && q <= 100`), then flag any input where `validateQty(q) === null`
+disagrees with `accept(q)`. That is a bypass by definition, and it reuses the
+existing generator, shrinker and reporter unchanged. This is roughly a day of the
+available window, not a rewrite.
+
+Note this is also the honest demonstration of ReDoS and inverted auth comparisons:
+those are *disagreement* bugs, which the existing oracle machinery already handles.
+
+---
+
 ## 1. Facts established from the official documents
 
 Sourced from `ALGOTHON26_All_12_Problem_Statements_with_PSID.pdf` and the case file.
@@ -194,9 +242,12 @@ These are theme-independent and block everything else.
 |---|---|---|
 | 1.1 | Lock PS: ALG-CYBER-02, stated in README | Explicit |
 | 1.2 | Build vulnerable target app: weak validator, ReDoS password regex, NaN-bypass quantity check | Engine finds all three |
-| 1.3 | Add 3–4 security rules as domain oracles | Passing selftest |
-| 1.4 | Extend benchmark: security cases + correct-validator controls | FP stays 0% |
-| 1.5 | End-to-end audit UI: paste validator → get bypass + minimal input + suggested fix | One screen, no setup |
+| 1.3 | **Validator (acceptance-disagreement) oracle** — the blocking task from §0.1 | `validateQty` finds its NaN bypass instead of `oracle-missing` |
+| 1.4 | Add 3–4 security rules as domain oracles | Passing selftest |
+| 1.5 | Extend benchmark: security cases + correct-validator controls | FP stays 0% |
+| 1.6 | End-to-end audit UI: paste validator → get bypass + minimal input + suggested fix | One screen, no setup |
+
+Task 1.3 is first for a reason: without it, 1.2 and 1.6 have nothing to demo.
 
 ### Phase 2 — Evidence, 17:00 → 20:00
 | # | Task |
@@ -244,9 +295,7 @@ Binding. Each is a real want that does not earn points against the weighting.
 
 ## 9. Open decisions needed
 
-1. **PS confirmation** — proceeding with ALG-CYBER-02. Say the word if you prefer
-   another; the pivot cost is roughly one day of the 12h window and I would need to
-   know before 10:00.
+1. **PS confirmation** — resolved: ALG-CYBER-02.
 2. **Solo vs. team of 2** — you registered solo; the rules allow staying solo. A second
    person would roughly double Phase 1 throughput. Team formation needs an email to
    hello@algoxilla.com with both registration screenshots **before** pairing.
@@ -258,9 +307,10 @@ Binding. Each is a real want that does not earn points against the weighting.
 
 ## 10. Immediate next actions
 
-1. `git init` + first commit + GitHub remote + push.
-2. Deploy and verify the public URL cold.
-3. Build the vulnerable target app and prove the engine finds the ReDoS input.
+1. ~~`git init` + first commit~~ **done** — 52 files, 12,188 lines, committed locally.
+2. **Create the GitHub repo and push** (needs your account — cannot be done from here).
+3. Deploy and verify the public URL cold.
+4. Build the validator oracle from §0.1 and prove it finds the NaN bypass.
 
-Items 1 and 2 are the submission blockers and are theme-independent. They start now,
-before the window opens, because nothing else can be submitted without them.
+Item 2 is the last remaining hard blocker: there is no repository *link* until the
+remote exists, and the submission requires one.
