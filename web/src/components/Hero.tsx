@@ -79,7 +79,7 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
                 >
                   <path d="M4 2.5l9 5.5-9 5.5z" />
                 </svg>
-                {isRunning ? 'Running…' : 'Run the 20-second demo'}
+                {isRunning ? 'Analysing…' : 'Analyse a real validator'}
               </button>
               <button
                 type="button"

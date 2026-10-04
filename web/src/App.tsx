@@ -488,8 +488,6 @@ export default function App() {
         <div className="pb-24 lg:pb-0">
           <Hero onPickEntry={loadExample} onRunDemo={() => void runDemo()} isRunning={isRunning} />
 
-          <AuditPanel />
-
           <main id="try" className="mx-auto max-w-6xl px-5 pb-20">
             <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
               <Editor
@@ -547,6 +545,12 @@ export default function App() {
               </div>
             </div>
           </main>
+
+          {/* Evidence for the problem statement, after the tool rather than
+              before it. The hero promises an interactive analyser, so the
+              analyser has to come next; an auto-running audit report sitting
+              between the promise and the thing reads as an unrelated spinner. */}
+          <AuditPanel />
 
           <Gallery onPickEntry={loadExample} />
           <BenchmarkMatrix />

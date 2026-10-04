@@ -22,15 +22,8 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'overview',
     label: 'Overview',
     short: 'Top',
-    hint: 'What Counterexample does, in one screen',
+    hint: 'What A2Z Cyber does, in one screen',
     icon: 'overview',
-  },
-  {
-    id: 'audit',
-    label: 'Security audit',
-    short: 'Audit',
-    hint: 'ALG-CYBER-02: find it, fix it, prove the fix held',
-    icon: 'audit',
   },
   {
     id: 'try',
@@ -38,6 +31,13 @@ export const NAV_SECTIONS: NavSection[] = [
     short: 'Try',
     hint: 'Paste a function, get the input that breaks it',
     icon: 'try',
+  },
+  {
+    id: 'audit',
+    label: 'Security audit',
+    short: 'Audit',
+    hint: 'ALG-CYBER-02: find it, fix it, prove the fix held',
+    icon: 'audit',
   },
   {
     id: 'gallery',
