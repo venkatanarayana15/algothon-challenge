@@ -83,7 +83,10 @@ export function Editor({
   }
 
   return (
-    <section className="panel-raised overflow-hidden">
+    // min-w-0 matters: this is a grid child, and grid items default to
+    // min-width:auto, which lets long content push the whole track wider than
+    // the viewport instead of wrapping inside it.
+    <section className="panel-raised min-w-0 overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-ink-850/60 px-4 py-2.5">
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />

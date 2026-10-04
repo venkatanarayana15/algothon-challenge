@@ -12,7 +12,12 @@ running late is total.
 npm run selftest      # must print 19/19
 npm run benchmark     # must print detection / false-positive lines
 npm run build         # must succeed
+npm run audit         # must print FIXED AND VERIFIED for every finding
+npm run test:e2e      # must print 29/29 against the running product
 ```
+
+All five exit non-zero on failure, so if any of them stops you submitting, you
+will find out here rather than in front of a judge.
 
 Then, from the **deployed URL** (not localhost), in an incognito window:
 
@@ -20,6 +25,17 @@ Then, from the **deployed URL** (not localhost), in an incognito window:
 - [ ] Hero shows a counterexample without scrolling
 - [ ] Click "Find the counterexample" → counterexample card appears
 - [ ] Mutation panel renders
+- [ ] Click **Run the 20-second demo** on the hero → lands on a **validation bypass**
+      (`validateQty(NaN)`), not just an off-by-one
+- [ ] The finding shows a **severity**, an **OWASP category** and a **CWE id**
+- [ ] Click **Apply the guard and retest** → the result becomes "No disagreement found"
+- [ ] The **This session** trail lists the bypass run and then the clean retest, and
+      the **fixed and verified** banner appears
+- [ ] Click **Revert to the vulnerable version** → running again reproduces the bypass
+- [ ] Click **Share this repro**, open the copied URL in a **new incognito tab** → it
+      re-runs by itself and lands on the same bypass
+- [ ] **⌘K** opens the palette, and the mobile bottom bar appears when you narrow the
+      window (the side rail should disappear at the same time)
 - [ ] Gallery renders all 16 cards, filters work (3 security validators first)
 - [ ] Benchmark section renders with the three headline numbers
 - [ ] Works on a phone (narrow the window — do not skip this)
@@ -51,6 +67,13 @@ Paste-ready, in the order below. Keep the pitch under 120 characters.
 > with delta debugging until it is the smallest input that still reproduces — and
 > verifies the result by injecting six operator faults to confirm the test
 > actually catches them.
+>
+> It then closes the workspace loop the problem statement asks for. For a
+> validation bypass it composes the one-line guard that is missing, applies it
+> on request, and immediately re-runs the analysis — so "fixed" is the next
+> result on screen rather than a claim. Every run is listed in a verification
+> trail, the report exports as a paste-ready regression assertion, a Markdown
+> write-up or JSON, and each result has a permalink that reopens the exact case.
 
 **Measured results**
 > 95% of seeded bugs detected (20/21), 0% false positives against nine

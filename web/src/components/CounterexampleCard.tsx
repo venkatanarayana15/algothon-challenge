@@ -3,6 +3,7 @@ import type { AnalysisReport } from '../types'
 import { CodeBlock } from './CodeBlock'
 import { KIND_LABEL, copyToClipboard, formatValue } from '../lib/format'
 import { CLASS_ADVICE } from '../lib/advice'
+import { SEVERITY_TONE, triageFor } from '../lib/security'
 
 interface Props {
   report: AnalysisReport
@@ -23,6 +24,13 @@ export function CounterexampleCard({ report }: Props) {
   const kind = KIND_LABEL[finding.kind] ?? KIND_LABEL['wrong-answer']
   const isBypass = finding.verdict === 'bypass'
   const isFalseRejection = finding.verdict === 'false-rejection'
+  const triage = triageFor(report.bugClass)
+
+  // The engine's advice is written against *this* source and names the exact
+  // fix; the per-class text is the general case. Preferring the specific one is
+  // the difference between "check your comparisons" and "Number.isInteger(q)
+  // first, then the range", and the card says which of the two it is showing.
+  const guidance = report.advice?.trim() || (report.bugClass ? CLASS_ADVICE[report.bugClass] : undefined)
 
   // A validator does not have a right answer, it has a verdict. "expected
   // reject / actual accept" is technically complete and practically unreadable,
@@ -105,19 +113,33 @@ export function CounterexampleCard({ report }: Props) {
 
         {report.bugClass && report.bugClass !== 'unknown' && (
           <div className="mt-5 rounded-lg border border-sky-500/20 bg-sky-500/[0.05] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="label text-sky-300/80">bug class</p>
-              <span className="chip border-sky-500/25 bg-sky-500/10 text-sky-300">
-                heuristic label
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="label mr-auto text-sky-300/80">bug class</p>
+              {triage && (
+                <span className={`chip font-semibold uppercase tracking-wide ${SEVERITY_TONE[triage.severity]}`}>
+                  {triage.severity}
+                </span>
+              )}
+              {triage?.owasp && <span className="chip border-sky-500/25 bg-sky-500/10 text-sky-300">{triage.owasp}</span>}
+              {triage?.cwe && <span className="chip font-mono text-[10px]">{triage.cwe}</span>}
+              <span className="chip border-sky-500/25 bg-sky-500/10 text-sky-300">heuristic label</span>
             </div>
             <p className="mt-1.5 font-mono text-[13px] text-sky-200">
               {report.bugClass.replace(/-/g, ' ')}
             </p>
-            {CLASS_ADVICE[report.bugClass] && (
-              <p className="mt-2 text-[13px] leading-relaxed text-slate-400">
-                {CLASS_ADVICE[report.bugClass]}
-              </p>
+            {triage && (
+              <p className="mt-2 text-[12px] leading-relaxed text-slate-500">{triage.reason}</p>
+            )}
+            {guidance && (
+              <div className="mt-3 border-t border-sky-500/15 pt-3">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <p className="label text-sky-300/80">what to fix</p>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-600">
+                    {report.advice ? 'written for this finding' : 'general guidance for this class'}
+                  </span>
+                </div>
+                <p className="text-[13px] leading-relaxed text-slate-300">{guidance}</p>
+              </div>
             )}
           </div>
         )}

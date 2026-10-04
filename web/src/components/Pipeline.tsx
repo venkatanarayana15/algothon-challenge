@@ -76,7 +76,7 @@ const NOT_BUILT = [
  */
 export function HonestLimits() {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-20">
+    <section id="limits" className="mx-auto max-w-6xl px-5 py-20">
       <div className="grid gap-10 lg:grid-cols-2">
         <div>
           <p className="label mb-3">Known limitations</p>

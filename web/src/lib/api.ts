@@ -1,4 +1,4 @@
-import type { AnalysisReport, ApiError, Example } from '../types'
+import type { AnalysisReport, ApiError, AuditReport, Example } from '../types'
 
 export interface AnalyzeRequest {
   code: string
@@ -65,8 +65,27 @@ export async function fetchExamples(signal?: AbortSignal): Promise<Example[]> {
   return payload.examples
 }
 
-export async function fetchHealth(signal?: AbortSignal) {
+export interface EngineHealth {
+  ok: boolean
+  /** Name of the optional model provider, or null when no key is configured. */
+  llm: string | null
+  uptimeSeconds: number
+  version?: string
+}
+
+export async function fetchHealth(signal?: AbortSignal): Promise<EngineHealth> {
   const response = await fetch('/api/health', { signal })
   if (!response.ok) throw new RequestError('unhealthy', 'network')
-  return (await response.json()) as { ok: boolean; llm: string | null; uptimeSeconds: number }
+  return (await response.json()) as EngineHealth
+}
+
+/**
+ * The full ALG-CYBER-02 workflow: audit the deliberately vulnerable
+ * application, fix each finding, retest. Takes several seconds because it
+ * genuinely runs the analysis, the fixes and the regression suite.
+ */
+export async function fetchAudit(signal?: AbortSignal): Promise<AuditReport> {
+  const response = await fetch('/api/audit', { signal })
+  if (!response.ok) throw new RequestError('Could not run the audit.', 'network')
+  return (await response.json()) as AuditReport
 }

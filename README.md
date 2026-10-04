@@ -98,9 +98,10 @@ implementations**, run end to end (`npm run benchmark`):
 | Bug-class naming | 70% — heuristic, reported as such |
 | Median analysis | ~2.2s over 75,000 generated inputs |
 
-Per class, detection ranges from 67% to 100% across all thirteen classes. The one
-miss is `max-with-nan`, where a `>=` comparison silently `NaN`-discards the
-maximum — it is left in the reported table rather than removed.
+Per class, detection ranges from 67% to 100% across the twelve classes the suite
+covers (thirteen are registered; one has no benchmark case yet). The one miss is
+`max-with-nan`, where a `>=` comparison silently `NaN`-discards the maximum — it
+is left in the reported table rather than removed.
 
 The controls are the point. A fuzzer that flags everything detects everything;
 a detection rate without a false-positive rate is a claim rather than a
@@ -149,17 +150,32 @@ npm start          # single process, serves api + web on :3001
 npm run selftest   # 19 checks: 13 counterexamples, 3 bypasses, 3 clean validators
 npm run benchmark  # detection rate, false positives, class accuracy
 npm run check:data # fails if web/src/data is out of date
+npm run audit      # the CYBER-02 arc: find, fix, retest, regression
+npm run test:e2e   # 29 checks against the running product over HTTP
 ```
 
 `npm start` serves the built bundle, so run `npm run build` first or every route
-returns 404 — `dist/` is gitignored, so a fresh clone does not have it.
+returns 404 — `dist/` is gitignored, so a fresh clone does not have it. `npm run
+test:e2e` boots that same server on its own port, so run it after a build too.
 
-Both verification commands print a table and exit non-zero on failure.
+Every verification command prints a table and exits non-zero on failure.
 
-`.github/workflows/ci.yml` runs typecheck, the self-test, the benchmark, the
-build, and a staleness check on the generated data on every push. That last step
-regenerates `web/src/data/` and fails if anything reproducible moved, so the site
-can never quietly show a finding the engine no longer produces.
+The five checks are deliberately different from each other, because passing one
+says nothing about the others:
+
+| Command | What it actually proves |
+| --- | --- |
+| `selftest` | The **engine** finds the counterexamples it is seeded with. |
+| `benchmark` | The engine's **rates** over a 30-case corpus, false positives included. |
+| `check:data` | The **site's data** still matches what the engine produces today. |
+| `audit` | The **fix-and-retest arc**: every finding patched, every legitimate case still passing. |
+| `test:e2e` | The **shipped product** over HTTP — the bundle, the failure paths, the whole CYBER-02 arc. |
+
+`.github/workflows/ci.yml` runs all six — typecheck, the self-test, the
+benchmark, the audit, the build, the staleness check on the generated data, and
+the end-to-end run against the built bundle. The staleness step regenerates
+`web/src/data/` and fails if anything reproducible moved, so the site can never
+quietly show a finding the engine no longer produces.
 
 Both generated files are stable enough to check in, but they are not byte-for-byte
 reproducible, and the staleness check does not pretend otherwise. It compares the
@@ -168,6 +184,63 @@ fields an honest run can reproduce — every rate, every verdict, every classifi
 and the observation fields of the deliberately non-deterministic benchmark case,
 whose subject injects `Math.random` and so returns a different minimal input on
 each run. Anything else moving fails the build.
+
+## Finding your way around the submission
+
+The site is a single page, but it is not a single scroll. A fixed top bar carries
+the brand, a live engine-status pill, a reading-progress hairline and the run
+action; on desktop a side rail lists every section with a one-line description
+and tracks your position; on phones and small tablets a five-item bottom bar sits
+inside the safe area so it never collides with a home indicator. One shared
+section model drives all three, so a section cannot be listed in one place and
+missing from another.
+
+| Shortcut | Does |
+|---|---|
+| `⌘K` / `Ctrl+K` | Command palette: jump to any section, load any seeded case, run the analysis, export the finding |
+| `⌘↵` / `Ctrl+↵` | Run the analysis from anywhere |
+| `⇧D` | The one-click demo — loads the NaN validation bypass and finds it live |
+| `Tab` / `Esc` | Indent inside the editor; close the palette |
+
+Two things are worth calling out because they are aimed at whoever has to
+*receive* a finding, not just produce it:
+
+- **A repro permalink.** “Share this repro” encodes the code, the spec and the
+  selected rule into the URL fragment. Opening the link re-runs the analysis
+  automatically, so the recipient lands on the same counterexample without typing.
+  The run is strictly client-side decode plus one normal analysis request.
+- **Evidence export.** The same report becomes a paste-ready regression
+  assertion, a Markdown write-up (subject, minimal counterexample, reference
+  implementation, root cause, mutation check) or a JSON record. The assertion is
+  the part that turns a demo into a guard that fails in CI.
+
+The app ships a web app manifest and icons, so it installs to a phone home
+screen and opens without browser chrome — useful when the venue wifi is worse
+than the phone's data connection.
+
+### Closing the loop inside the tool
+
+The problem statement's workflow is identify → demonstrate safely → fix → retest
+→ document. The audit panel proves that loop on a bundled target; the main tool
+now does the same loop on *your* code:
+
+- **Triage on every finding.** A severity, plus an OWASP Top 10 category or a
+  CWE id where one genuinely applies. Classes with no honest CWE mapping get
+  none, and `lib/security.ts` states the rule it follows rather than padding the
+  list.
+- **A one-line fix, shown before it is applied.** For a numeric validation
+  bypass the tool composes the guard
+  `if (typeof q !== 'number' || !Number.isFinite(q)) return <your own rejection value>;`.
+  It reuses the author's own rejection statement instead of inventing one, and
+  declines to suggest anything when the function has no convention to borrow or
+  when the engine reports the parameter's source already checks finiteness.
+- **Apply the guard and retest.** One click inserts the guard and immediately re-runs the
+  analysis, so “fixed” is the next result on screen rather than a claim.
+  *Revert* restores the original source so the bypass can be reproduced again.
+- **A verification trail.** Every run is listed in order with its outcome, and a
+  **fixed and verified** banner appears only once the trail actually contains a
+  bypass followed by a clean run on the changed code — the retest is the
+  evidence, not the badge.
 
 ## Finding a validation bypass
 

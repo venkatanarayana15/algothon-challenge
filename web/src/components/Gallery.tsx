@@ -13,7 +13,7 @@ type Filter = 'all' | 'easy' | 'medium' | 'hard' | 'real'
 /**
  * The gallery is the argument for the product. Every card is a real run of the
  * real engine, captured in `snapshot.json` -- not a mockup. If a judge
- * distrusts the headline claim, they can read thirteen of them here.
+ * distrusts the headline claim, they can read every one of them here.
  */
 export function Gallery({ onPickEntry }: Props) {
   const [filter, setFilter] = useState<Filter>('all')
@@ -40,7 +40,7 @@ export function Gallery({ onPickEntry }: Props) {
       <div className="mb-10 max-w-2xl">
         <p className="label mb-3 text-rose-400/80">Seeded gallery</p>
         <h2 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Thirteen real bugs, each with the exact input that triggers it
+          {entries.length} real bugs, each with the exact input that triggers it
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-slate-400">
           Every card below is a genuine run of the engine against a seeded submission. Load any

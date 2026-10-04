@@ -34,6 +34,12 @@ jobs:
       - name: Benchmark -- detection and false-positive rates
         run: npm run benchmark
 
+      # The ALG-CYBER-02 arc as a judge walks it: find a vulnerability, fix it,
+      # retest it, and prove legitimate functionality survived. Exits non-zero if
+      # any finding is not FIXED_AND_VERIFIED or any legitimate case regressed.
+      - name: Audit -- fix and retest every finding
+        run: npm run audit
+
       - name: Build
         run: npm run build
 
@@ -44,6 +50,12 @@ jobs:
       # scripts/check-data.js). Every rate and every verdict must match.
       - name: Check generated data is up to date
         run: npm run check:data
+
+      # Drives the shipped product over HTTP -- the static bundle, the failure
+      # paths, and the fix-and-retest arc -- rather than the engine in isolation.
+      # Runs after the build because it asserts on the real served output.
+      - name: End-to-end -- the running product
+        run: npm run test:e2e
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

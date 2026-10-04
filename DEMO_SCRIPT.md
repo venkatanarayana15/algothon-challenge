@@ -16,6 +16,10 @@ link, so it has to carry the entire argument on its own.
 - Set the browser zoom to 100% and make the window full screen.
 - Have `npm start` already running.
 - Load the app, scroll to the gallery once so the fonts and images are cached.
+- Know the two shortcuts you will use on camera: **⌘K** (jump to anything) and
+  **⇧D** (run the demo, which does Beat 2 for you). Neither is decoration — the
+  first saves you scrolling on video, the second removes the dropdown from the
+  one beat that must not fumble.
 - **Have the fixed validator ready in the clipboard**, for Beat 3:
 
   ```js
@@ -57,6 +61,12 @@ no "hi, my name is".
 **On screen:** scroll to the editor. The `validateQty` function is already there,
 and the policy is set to **Quantity**.
 
+> **Fastest path:** press **⇧D** anywhere, or click **Run the 20-second demo** on
+> the hero. That loads the vulnerable validator and attacks it in one step. If you
+> would rather show the rule being chosen by hand — it is a real feature and it
+> makes the next beat land harder — follow the numbered steps instead. Rehearse
+> whichever you pick; do not switch mid-take.
+
 ```js
 function validateQty(q) {
   if (q <= 0) return "must be positive";
@@ -89,6 +99,13 @@ one-character cause, and the tool named the kind of bug, not just the input.
 
 **On screen:** select all in the editor and paste the fixed validator. Press **⌘↵**.
 
+> **One-click alternative:** the tool now composes that guard itself. After the
+> bypass lands, click **Apply the guard and retest** — it inserts the line and
+> re-runs in one step, and the **This session** trail underneath shows the bypass
+> run followed by the clean retest with a "fixed and verified" banner. That is
+> the whole workflow on screen without typing, and it saves about fifteen
+> seconds of the two minutes. Either path is fine; do not use both.
+
 The result is **no counterexample found**.
 
 > "So now the fix: check the type before the range. `Number.isInteger(q)` first.
@@ -99,6 +116,14 @@ The result is **no counterexample found**.
 > And the reason I trust that 'no counterexample' here is that it isn't the
 > default answer. This same tool reports zero false positives against nine
 > deliberately correct implementations — it stays quiet when it should."
+
+**Then click "Copy regression test"** (in the "Take the finding with you" row
+under the result) and paste it into a terminal or a test file on screen.
+
+> "And this is the part that turns a demo into a guard: the same report gives me
+> the assertion to paste into the suite. `assert.ok(validateQty(NaN))` — it fails
+> today against the vulnerable version and passes against the fix. That is the
+> regression test, written by the tool, with the root cause attached."
 
 **Optional, if time allows — hover the mutation panel:**
 
@@ -143,13 +168,15 @@ persuasive move available here.
 
 **On screen:** scroll to the gallery. Cards are already rendered.
 
-> "Thirteen seeded bugs, forty-five thousand generated inputs. Every card is a
-> real run of the engine, not a mockup.
+> "Sixteen bugs, every card a real run of the engine rather than a mockup. The
+> first three are the security cases — a bypass before an off-by-one.
 >
 > Click any one and it loads into the editor, and you get the same
 > counterexample yourself."
 
-**Click one card's "run it"** and show the editor refilling.
+**Click one card's "run it"** and show the editor refilling. Optionally reach it
+with **⌘K** and type `gall` before pressing Enter — three seconds of keyboard
+navigation that also shows the palette off.
 
 **Why:** reproducibility is the strongest credibility signal you can offer.
 
@@ -178,7 +205,8 @@ scrolling. Precision reads as competence.
 > "Counterexample, for ALG-CYBER-02. Paste your validator, get the input that
 > gets through it — then fix it and prove the fix holds. No signup, no upload, no
 > API key — the link's in the submission, and every result is reproducible from
-> the repo."
+> the repo. Every run also has a permalink, so a finding travels as a link that
+> reopens this exact case."
 
 **End on the hero. Hold for two seconds.**
 
@@ -188,7 +216,8 @@ scrolling. Precision reads as competence.
 
 - [ ] Cursor visible throughout
 - [ ] No notifications, no personal tabs, no bookmarks bar
-- [ ] ⌘↵ actually runs (test before recording)
+- [ ] ⌘↵ actually runs, and ⇧D runs the demo (test both before recording)
+- [ ] ⌘K opens the palette and Enter selects (test before recording)
 - [ ] Fixed validator is in the clipboard before you hit record
 - [ ] The counterexample card is fully rendered before you talk over it
 - [ ] The benchmark section has scrolled into view fully before you start

@@ -5,6 +5,12 @@
  * can be reworded for a human without touching the classification logic.
  */
 export const CLASS_ADVICE: Record<string, string> = {
+  // The security case, and the only class where the wrong answer is worse than
+  // a wrong result: the input was never supposed to reach the rest of the
+  // program at all. The engine sends its own class-specific advice for this
+  // one; this entry is the fallback when it does not.
+  'validation-bypass':
+    'Check the type and finiteness of every field before the range test. Comparisons are false against true, null, "" and NaN, so a range check written with comparisons alone accepts all four.',
   'off-by-one': 'Audit every loop bound and index arithmetic. One comparison is one element too few.',
   'empty-input': 'Decide explicitly what the function returns for an empty collection, before indexing into it.',
   'missing-base-case': 'Check that the recursion guard covers every valid input, including the smallest one.',

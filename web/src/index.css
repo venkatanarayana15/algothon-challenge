@@ -6,6 +6,10 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* The top bar is fixed, so anchors and scrollIntoView must stop below it
+       rather than parking the heading underneath it. */
+    scroll-padding-top: 4.5rem;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -92,6 +96,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {

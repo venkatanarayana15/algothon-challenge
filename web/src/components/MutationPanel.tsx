@@ -50,9 +50,12 @@ export function MutationPanel({ score }: Props) {
         {score.results.map((result) => (
           <li
             key={result.id}
-            className="flex items-center justify-between gap-3 rounded-md border border-white/[0.05] bg-ink-950/40 px-3 py-2"
+            className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-white/[0.05] bg-ink-950/40 px-3 py-2"
           >
-            <code className="truncate font-mono text-[11px] text-slate-400">{result.label}</code>
+            {/* min-w-0 is load-bearing: a flex item defaults to min-width:auto,
+                which would make `truncate` (white-space:nowrap) report the whole
+                label as its minimum and push the page wider than the phone. */}
+            <code className="min-w-0 truncate font-mono text-[11px] text-slate-400">{result.label}</code>
             <span
               className={`chip shrink-0 ${
                 result.killed

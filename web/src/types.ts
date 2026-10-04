@@ -9,6 +9,10 @@ export interface InferredParam {
   element?: { type: string }
   min?: number
   max?: number
+  /** True when the parameter's own source verifies integrality. */
+  checksInteger?: boolean
+  /** True when the parameter's own source verifies it is finite. */
+  checksFinite?: boolean
 }
 
 export interface Finding {
@@ -130,4 +134,54 @@ export interface Snapshot {
 export interface ApiError {
   error: string
   kind?: string
+}
+
+/** One completed analysis run, for the in-session verification trail. */
+export interface RunRecord {
+  id: number
+  /** Epoch milliseconds, for the elapsed-time column. */
+  at: number
+  /** How the run was started. */
+  origin: 'manual' | 'demo' | 'fix'
+  status: AnalysisReport['status']
+  bugClass?: string | null
+  call?: string | null
+  verdict?: 'bypass' | 'false-rejection'
+  analysisMs: number
+}
+
+/** One finding from the ALG-CYBER-02 audit of the target application. */
+export interface AuditFinding {
+  id: string
+  title: string
+  owasp: string
+  subject: string
+  rootCause: string
+  fix: string
+  detectedByEngine: boolean
+  detection: {
+    reason?: string
+    status?: string | null
+    kind?: string
+    verdict?: string | null
+    call?: string
+    class?: string | null
+  }
+  attack: { call: string; before: string; after: string; note?: string; blocked: boolean }
+  legitimateChecks: { total: number; passed: number; failures: { id: string; note: string; why?: string }[] }
+  behaviourChanged: boolean
+  status: 'FIXED_AND_VERIFIED' | 'INCOMPLETE'
+}
+
+export interface AuditReport {
+  target: string
+  vulnerabilities: AuditFinding[]
+  regression: {
+    legitimateChecks: number
+    passedBeforeFix: number
+    passedAfterFix: number
+    brokenByFix: { id: string; note: string; why?: string }[]
+    newlyPassingAfterFix: string[]
+    functionalityPreserved: boolean
+  }
 }

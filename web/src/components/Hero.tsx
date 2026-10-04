@@ -1,9 +1,13 @@
 import snapshot from '../data/snapshot.json'
 import type { SnapshotEntry } from '../types'
 import { DIFFICULTY_TONE, formatValue } from '../lib/format'
+import { scrollToSection } from '../lib/nav'
 
 interface Props {
   onPickEntry: (entry: SnapshotEntry) => void
+  /** Loads the seeded validation-bypass case and runs it immediately. */
+  onRunDemo: () => void
+  isRunning: boolean
 }
 
 const STATS = [
@@ -18,7 +22,7 @@ const STATS = [
  * rather than a screenshot of one -- rendered from the static snapshot, which
  * means it costs zero network requests and cannot fail to load.
  */
-export function Hero({ onPickEntry }: Props) {
+export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
   const entries = snapshot.entries as SnapshotEntry[]
   // A validation bypass leads. On a security submission the finding that
   // matters is the one that says "this input should never have been accepted",
@@ -30,7 +34,7 @@ export function Hero({ onPickEntry }: Props) {
   const isBypass = headline?.verdict === 'bypass'
 
   return (
-    <header className="relative overflow-hidden">
+    <header id="overview" className="relative overflow-hidden">
       <div className="mx-auto max-w-6xl px-5 pb-14 pt-16 sm:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
           <div className="animate-fade-up">
@@ -57,6 +61,35 @@ export function Hero({ onPickEntry }: Props) {
               reference available it still finds crashes and non-termination. No signup, no upload,
               no API key.
             </p>
+
+            {/* The demo is the fastest honest route to the point of the
+                submission: one click, one real bypass, no typing. */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={onRunDemo}
+                disabled={isRunning}
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-rose-500 to-amber-400
+                  px-5 py-2.5 text-sm font-semibold text-ink-950 transition hover:brightness-110
+                  disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  className={`h-3.5 w-3.5 fill-current ${isRunning ? 'animate-pulse' : ''}`}
+                >
+                  <path d="M4 2.5l9 5.5-9 5.5z" />
+                </svg>
+                {isRunning ? 'Running…' : 'Run the 20-second demo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('try')}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.03]
+                  px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:text-white"
+              >
+                Paste your own function
+              </button>
+            </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
               {STATS.map((stat) => (
