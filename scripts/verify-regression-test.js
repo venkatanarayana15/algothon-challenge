@@ -112,3 +112,24 @@ assert.equal(
 console.log(`ok   all ${legitTotal} legitimate-behaviour tests stay green against vulnerable code`)
 
 console.log('\nThe generated suite is a genuine regression test: red on the bug, green on the fix.')
+
+// ---- 3. the committed copy is not stale ---------------------------------------
+//
+// The file is checked in so a judge can read it without running anything, which
+// only helps if it matches what the code does today. Regenerating and comparing
+// catches the case where app.js gained a finding and the committed suite never
+// learned about it.
+//
+// This is only meaningful because the generator emits no wall-clock timings --
+// it states verdicts, not measured milliseconds -- so the output is byte-stable.
+const { buildRegressionTest } = await import('../server/target/regression-test.js')
+const { auditTarget } = await import('../server/target/audit.js')
+const regenerated = buildRegressionTest(await auditTarget({ budgets: 2500 })).contents
+if (regenerated !== fs.readFileSync(generated, 'utf8')) {
+  console.error(
+    'FAIL  security-regression.test.mjs is out of date.\n' +
+      '      Run: npm run regression-test   (then commit the result)',
+  )
+  process.exit(1)
+}
+console.log('ok   the committed suite matches what the audit generates today')

@@ -147,11 +147,18 @@ both halves by swapping the fixes back out:
 ok   patched source: 15 passing
 ok   vulnerable source: 3 failing (one per finding)
 ok   all 12 legitimate-behaviour tests stay green against vulnerable code
+ok   the committed suite matches what the audit generates today
 ```
 
-That last line is the one that matters. A "fix" that closed the vulnerability by
+That third line is the one that matters. A "fix" that closed the vulnerability by
 breaking valid input would fail it — which is the half of a security fix that is
 usually skipped.
+
+The last line keeps the checked-in copy honest. The suite is committed so a
+reviewer can read it without running anything, which only helps if it still
+matches the code; `verify:regression-test` regenerates and fails if it drifted.
+That check is only possible because the generator states verdicts rather than
+measured milliseconds, so its output is byte-stable across runs.
 
 ### The seeded gallery
 
@@ -213,7 +220,7 @@ says nothing about the others:
 | `check:data` | The **site's data** still matches what the engine produces today. |
 | `audit` | The **fix-and-retest arc**: every finding patched, every legitimate case still passing. |
 | `test:e2e` | The **shipped product** over HTTP — the bundle, the failure paths, the whole CYBER-02 arc. |
-| `verify:regression-test` | That the generated suite is a **real** regression test: green on the fix, red on the bug. |
+| `verify:regression-test` | That the generated suite is a **real** regression test: green on the fix, red on the bug, and not stale. |
 
 `.github/workflows/ci.yml` runs all six — typecheck, the self-test, the
 benchmark, the audit, the build, the staleness check on the generated data, and

@@ -77,8 +77,8 @@ function authorize(role, level) {
 
 test('V1: validateQty rejects an input that bypasses the rule', () => {
   // NaN compares false against every bound, so it passes a range check built only from comparisons.
-  // Vulnerable version: accepted in 1ms
-  // Patched version:  rejected in 0ms
+  // Vulnerable version: accepted
+  // Patched version:  rejected
   assert.strictEqual(accepts('validateQty')(validateQty(...[NaN])), false, 'the input must be rejected, not accepted')
 })
 
@@ -88,8 +88,8 @@ test('V2: isStrongEnoughPassword returns promptly on a backtracking trigger', ()
   const started = process.hrtime.bigint()
   const result = isStrongEnoughPassword(input)
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
-  // Vulnerable version: hung — never returned (1511ms budget exhausted)
-  // Patched version:  accepted in 1ms
+  // Vulnerable version: hangs — the budget is exhausted without returning
+  // Patched version:  returns immediately
   assert.strictEqual(accepts('isStrongEnoughPassword')(result), true, 'a strong password must still be accepted')
   // The bound is deliberately loose: a fixed implementation returns in well under
   // a millisecond, while the vulnerable one exhausts a 1500ms budget. Anything
@@ -99,8 +99,8 @@ test('V2: isStrongEnoughPassword returns promptly on a backtracking trigger', ()
 
 test('V3: authorize rejects an input that bypasses the rule', () => {
   // The access-control predicate is inverted, so the lowest-privileged role is accepted.
-  // Vulnerable version: accepted in 0ms
-  // Patched version:  rejected in 1ms
+  // Vulnerable version: accepted
+  // Patched version:  rejected
   assert.strictEqual(accepts('authorize')(authorize(...["user", 0])), false, 'the input must be rejected, not accepted')
 })
 

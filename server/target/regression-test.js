@@ -45,6 +45,19 @@ function argsLiteral(args) {
 }
 
 /**
+ * What the vulnerable version did, as a stable phrase.
+ *
+ * The audit's own `attack.before` reads "accepted in 1ms", and that millisecond
+ * count differs on every run -- which would make the generated file churn on
+ * every regeneration and fail any staleness check. What matters for a reader is
+ * the verdict, not how many milliseconds it took, so the timing is dropped here
+ * and kept in the UI where it is shown as an observation.
+ */
+function stableVerdict(finding) {
+  return finding.attack.before.startsWith('accepted') ? 'accepted' : finding.attack.before
+}
+
+/**
  * The values behind a display call such as `validateQty(NaN)`.
  *
  * The attack input is reconstructed from the finding rather than re-parsed out
@@ -89,8 +102,8 @@ test('${v.id}: ${attack.fn} returns promptly on a backtracking trigger', () => {
   const started = process.hrtime.bigint()
   const result = ${attack.fn}(input)
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
-  // Vulnerable version: ${v.attack.before}
-  // Patched version:  ${v.attack.after}
+  // Vulnerable version: hangs — the budget is exhausted without returning
+  // Patched version:  returns immediately
   assert.strictEqual(accepts('${attack.fn}')(result), true, 'a strong password must still be accepted')
   // The bound is deliberately loose: a fixed implementation returns in well under
   // a millisecond, while the vulnerable one exhausts a 1500ms budget. Anything
@@ -102,8 +115,8 @@ test('${v.id}: ${attack.fn} returns promptly on a backtracking trigger', () => {
       return `
 test('${v.id}: ${attack.fn} rejects an input that bypasses the rule', () => {
   // ${attack.why}
-  // Vulnerable version: ${v.attack.before}
-  // Patched version:  ${v.attack.after}
+  // Vulnerable version: ${stableVerdict(v)}
+  // Patched version:  rejected
   assert.strictEqual(accepts('${attack.fn}')(${attack.fn}(...${argsLiteral(attack.args)})), false, 'the input must be rejected, not accepted')
 })`
     })
