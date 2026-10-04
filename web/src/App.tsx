@@ -510,6 +510,16 @@ const revertFix = useCallback(() => {
           <Hero onPickEntry={loadExample} onRunDemo={() => void runDemo()} isRunning={isRunning} />
 
           <main id="try" className="mx-auto max-w-6xl px-5 pb-20">
+            <div className="mb-8 max-w-3xl">
+              <p className="label mb-2.5">Try it · the analyser</p>
+              <h2 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Paste a function. Get the input that breaks it.
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-slate-400">
+                Paste a validator or pick an example, press Analyse, and the answer arrives where
+                you clicked. Apply the fix when one is offered, and the retest confirms it held.
+              </p>
+            </div>
             <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
               <Editor
                 code={code}

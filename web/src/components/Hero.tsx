@@ -13,7 +13,11 @@ interface Props {
 const STATS = [
   { value: '95%', label: 'bugs detected' },
   { value: '0%', label: 'false positives' },
-  { value: '~2s', label: 'median analysis' },
+  // Measured on the audit target, not estimated: three vulnerabilities found,
+  // fixed and retested with the legitimate suite intact. The previous third
+  // stat claimed a "~2s median analysis" with no measurement behind it, which
+  // is exactly the kind of number this project refuses to print.
+  { value: '3/3', label: 'vulnerabilities fixed & verified' },
 ]
 
 /**
@@ -105,13 +109,13 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
             <div className="animate-fade-up [animation-delay:120ms]">
               <div className="panel-raised relative overflow-hidden">
                 <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-rose-500" />
-                    <span className="text-[11px] font-medium text-slate-400">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+                    <span className="truncate text-[11px] font-medium text-slate-400">
                       {isBypass ? 'security finding' : 'real engine output'} · {headline.title}
                     </span>
                   </div>
-                  <span className={`chip ${DIFFICULTY_TONE[headline.difficulty]}`}>
+                  <span className={`chip shrink-0 ${DIFFICULTY_TONE[headline.difficulty]}`}>
                     {headline.difficulty}
                   </span>
                 </div>
@@ -125,6 +129,14 @@ export function Hero({ onPickEntry, onRunDemo, isRunning }: Props) {
                   <code className="block font-mono text-lg font-semibold text-rose-200">
                     {headline.counterexample}
                   </code>
+                  {/* The finding belongs to an application, not to a bare
+                      function. The audit names this route for the same
+                      subject, so the hero and the evidence agree. */}
+                  {isBypass && (
+                    <p className="mt-2 font-mono text-[11px] text-slate-500">
+                      via <span className="text-rose-300/90">POST /cart/items</span>
+                    </p>
+                  )}
 
                   {isBypass && (
                     <span className="chip mt-3 border-rose-500/40 bg-rose-500/15 font-semibold uppercase tracking-wide text-rose-200">

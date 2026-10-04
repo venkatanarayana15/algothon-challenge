@@ -34,7 +34,7 @@ export function TopBar({
           onClick={() => scrollToSection('overview')}
           data-action="brand"
           className="group flex shrink-0 items-center gap-2.5 rounded-lg px-1 py-1 transition"
-          aria-label="Counterexample — back to top"
+          aria-label="A2Z Cyber — back to top"
         >
           <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-rose-500 to-amber-400">
             <span className="absolute inset-0 opacity-40 [background:radial-gradient(circle_at_30%_20%,white,transparent_60%)]" />
@@ -102,7 +102,10 @@ export function TopBar({
               weight={2}
               filled={!isRunning}
             />
+            {/* The label is the primary affordance, so it never disappears --
+                on a phone this control used to render as an unlabelled icon. */}
             <span className="hidden sm:inline">{isRunning ? 'Hunting…' : 'Run analysis'}</span>
+            <span className="sm:hidden">{isRunning ? 'Running' : 'Run'}</span>
           </button>
         </div>
       </div>

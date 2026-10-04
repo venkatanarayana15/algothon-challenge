@@ -12,7 +12,7 @@ const STEPS = [
   {
     n: '03',
     title: 'Disagree with a second implementation',
-    body: 'Fourteen hand-written reference implementations ship in the box. For anything else we generate an independent brute-force version. Both run side by side on every input.',
+    body: 'Fourteen hand-written reference implementations ship in the box, and both run side by side on every input. A function outside that library needs a one-line spec or a model key to build a second implementation; without either, we still catch crashes and non-termination, and say so rather than guess at an answer.',
   },
   {
     n: '04',
@@ -66,7 +66,7 @@ const NOT_BUILT = [
   'Non-JavaScript languages',
   'Test-suite generation from a spec',
   'Coverage measurement',
-  'Accounts, history and sharing',
+  'Accounts, and history beyond this browser session',
 ]
 
 /**

@@ -40,7 +40,10 @@ export function BenchmarkMatrix() {
     {
       value: `${Math.round(summary.detectionRate * 100)}%`,
       label: 'detection rate',
-      detail: `${summary.bugCases} seeded bugs, all found by the engine`,
+      // Derived, not asserted. "all found" next to a 95% headline is a
+      // contradiction, and the caveat below names the escape -- so the detail
+      // line has to count it too.
+      detail: `${summary.bugCases - summary.missed.length} of ${summary.bugCases} seeded bugs found by the engine`,
       tone: 'text-emerald-300',
     },
     {
