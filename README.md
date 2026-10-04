@@ -151,6 +151,9 @@ npm run benchmark  # detection rate, false positives, class accuracy
 npm run check:data # fails if web/src/data is out of date
 ```
 
+`npm start` serves the built bundle, so run `npm run build` first or every route
+returns 404 — `dist/` is gitignored, so a fresh clone does not have it.
+
 Both verification commands print a table and exit non-zero on failure.
 
 `.github/workflows/ci.yml` runs typecheck, the self-test, the benchmark, the
