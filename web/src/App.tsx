@@ -599,7 +599,7 @@ function CleanState({ report }: { report: AnalysisReport }) {
         <span className="font-medium text-amber-300/90">This is not a proof that your code is correct.</span>{' '}
         It means {report.stats.inputsTested.toLocaleString()} generated inputs agreed with{' '}
         <span className="text-slate-300">{report.oracle.signature}</span>. Passing inputs a
-        generator produced is far weaker evidence than a counterexample — bugs that need a very
+        generator produced is far weaker evidence than an input finding — bugs that need a very
         specific input still hide here.
       </p>
 
@@ -662,7 +662,7 @@ function RunningState() {
           <circle cx="8" cy="8" r="6" strokeOpacity="0.2" />
           <path d="M14 8a6 6 0 00-6 6" strokeLinecap="round" />
         </svg>
-        <h3 className="text-sm font-semibold text-white">Hunting for a counterexample</h3>
+        <h3 className="text-sm font-semibold text-white">Hunting for an input</h3>
       </div>
 
       <div className="relative h-1 overflow-hidden rounded-full bg-white/[0.05]">
@@ -737,7 +737,7 @@ function Footer() {
     <footer data-footer="site" className="border-t border-white/[0.05]">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-10 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-white">Counterexample</p>
+          <p className="text-sm font-semibold text-white">A2Z Cyber</p>
           <p className="mt-1 text-xs text-slate-600">
             Differential testing, counterexample shrinking and mutation analysis for JavaScript.
           </p>

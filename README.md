@@ -1,4 +1,4 @@
-# Counterexample
+# A2Z Cyber
 
 **ALGOTHON'26 · Problem Statement ALG-CYBER-02 — Secure the Application**
 
@@ -12,7 +12,7 @@ validator or an access-control predicate is judged by the cases its author
 thought of, which is exactly why `NaN` walks through a range check and an
 inverted `<=` admits the lowest-privileged caller.
 
-Counterexample finds those inputs. It reads your function's AST to infer what
+A2Z Cyber finds those inputs. It reads your function's AST to infer what
 each parameter really is, generates thousands of inputs biased toward boundaries
 rather than at random, and shrinks the smallest failing input down with delta
 debugging. For validators there is no reference answer to compare against — only
@@ -278,10 +278,10 @@ Two things are worth calling out because they are aimed at whoever has to
 
 - **A repro permalink.** “Share this repro” encodes the code, the spec and the
   selected rule into the URL fragment. Opening the link re-runs the analysis
-  automatically, so the recipient lands on the same counterexample without typing.
+  automatically, so the recipient lands on the same input without typing.
   The run is strictly client-side decode plus one normal analysis request.
 - **Evidence export.** The same report becomes a paste-ready regression
-  assertion, a Markdown write-up (subject, minimal counterexample, reference
+  assertion, a Markdown write-up (subject, minimal input, reference
   implementation, root cause, mutation check) or a JSON record. The assertion is
   the part that turns a demo into a guard that fails in CI.
 
@@ -317,7 +317,7 @@ now does the same loop on *your* code:
 
 A validator is the security case, and it needs a different comparison. A validator
 does not have a right answer, it has a verdict, so there is no reference "error
-message for input q" to disagree with. Counterexample instead takes the *policy* —
+message for input q" to disagree with.   instead takes the *policy* —
 the rule you meant to enforce — and reports any input where your validator's
 verdict disagrees with it:
 
@@ -382,7 +382,7 @@ building it.
 
 ## What this does not do
 
-- **No proof of correctness.** Finding no counterexample is weak evidence, not
+- **No proof of correctness.** Finding no input is weak evidence, not
   a guarantee. The UI says so explicitly rather than showing a green checkmark.
 - **Single-file JavaScript.** No modules, no multi-file projects, no other
   languages.
