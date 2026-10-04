@@ -1,37 +1,52 @@
 # Counterexample
 
-**Paste your code. Get the smallest input that breaks it.**
+**ALGOTHON'26 · Problem Statement ALG-CYBER-02 — Secure the Application**
 
-<!-- ALGOTHON'26 · Problem Statement ALG-CYBER-02 — Secure the Application -->
+[![CI](https://github.com/venkatanarayana15/algothon-challenge/actions/workflows/ci.yml/badge.svg)](https://github.com/venkatanarayana15/algothon-challenge/actions/workflows/ci.yml)
 
-[![CI](./actions/workflows/ci.yml/badge.svg)](./actions/workflows/ci.yml)
+<!-- LIVE-DEMO-URL -->
 
-Counterexample is an adversarial tester for JavaScript functions. You paste a
-function; it runs a second, independent implementation alongside yours over
-thousands of generated inputs, and hands you the smallest input where the two
-disagree. The second implementation ships with the tool for the common cases —
-a model key is optional, not required.
+Every developer writes tests for the inputs they imagined, and the bugs live in
+the inputs nobody did. For security code the gap is sharper still: an input
+validator or an access-control predicate is judged by the cases its author
+thought of, which is exactly why `NaN` walks through a range check and an
+inverted `<=` admits the lowest-privileged caller.
+
+Counterexample finds those inputs. It reads your function's AST to infer what
+each parameter really is, generates thousands of inputs biased toward boundaries
+rather than at random, and shrinks the smallest failing input down with delta
+debugging. For validators there is no reference answer to compare against — only
+a rule — so it holds your function to the rule its own comparisons state, and
+reports any input that should have been rejected but was not.
 
 ```js
-function isPrime(n) {
-  if (n < 2) return true;          // <- the bug
-  for (let d = 2; d * d <= n; d++) {
-    if (n % d === 0) return false;
-  }
-  return true;
+function validateQty(q) {
+  if (q <= 0) return 'quantity must be positive';
+  if (q > 100) return 'quantity exceeds maximum';
+  return null;                        // null means accepted
 }
 ```
 
 ```
-counterexample   isPrime(-1)
-returned         true
-expected         false
+counterexample   validateQty(NaN)
+your validator   accept  -- it let the input through
+the rule         reject  -- NaN is not a number in range
 ```
+
+Every comparison with `NaN` is false, so both guards fall through. That is one
+line of real code, and it survived review everywhere it was written.
 
 No signup. No file upload. No API key. No database. About two seconds.
 
-**Measured:** 95% of real bugs detected, 0% false positives against correct
-controls, across 21 seeded defects and 9 correct implementations.
+**Measured:** 95% of real bugs detected and **0% false positives** against
+correct controls, across 21 seeded defects and 9 correct implementations — plus a
+three-finding security audit that is fixed, re-attacked and regression-tested end
+to end.
+
+> **Try it:** [`npm run audit`](README.md#the-alg-cyber-02-audit-and-a-test-you-can-run)
+> runs the whole identify → demonstrate → fix → retest loop locally in about
+> seven seconds and prints the result. You do not need the web app to believe
+> the claims.
 
 ---
 
@@ -52,6 +67,11 @@ The engine executes untrusted JavaScript server-side, so **static hosting will
 not work** — Vercel's static tier, Netlify Pages and S3 all lack a runtime.
 Render, Fly, Railway, a VPS or Cloudflare Workers with Node compatibility are the
 options that do.
+
+> **Adding the deployed URL to this README:** replace the `<!-- LIVE-DEMO-URL -->`
+> marker near the top with a line like
+> `**Live demo:** https://your-app.onrender.com`. It is a single line and it is
+> the first thing a judge looks for.
 
 ---
 
