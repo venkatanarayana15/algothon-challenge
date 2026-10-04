@@ -63,14 +63,19 @@ Verified behaviour:
 
 | Subject | Policy | Result |
 |---|---|---|
-| `validateQty` — `if (q <= 0)` / `if (q > 100)` | integers 1..100 | `validateQty(true)` — **bypass**, `expected: reject, actual: accept` |
-| `isValidAge` — `if (a < 0)` / `if (a > 120)` | age preset | `isValidAge(null)` — **bypass** |
+| `validateQty` — `if (q <= 0)` / `if (q > 100)` | integers 1..100 | **bypass** — reported as `validateQty(true)` on some runs and `validateQty(NaN)` on others, `expected: reject, actual: accept` |
+| `isValidAge` — `if (a < 0)` / `if (a > 120)` | age preset | **bypass** — `isValidAge(null)` |
 | `checkPort` — `Number.isInteger` then range | port preset | **no counterexample** — 0% false positive preserved |
 
-The mechanism is type coercion, not the `NaN` case originally predicted: `true`,
-`null` and `""` all compare false against both bounds, so the check passes them. The
-shrinker settles on `true` because it is the plainest such value. This is a more
-classic bypass than `NaN` and the demo is honest about what it found.
+The mechanism is **type coercion**. `true`, `null`, `""`, `NaN` and `Infinity` all
+compare false against both bounds, so a range check written with comparisons alone
+lets every one of them through. There is not one bug here, there is a family of them,
+and the shrinker reports whichever it reaches first — which is why the same validator
+yields a different minimal input across runs. Every one of them is a genuine bypass;
+none of them is the "right" answer to quote, so the demo should show the family
+rather than a single input. This also means `validateQty` is a *deterministic* subject
+whose *reported counterexample* varies, which is the opposite of the
+`nondeterministic-sum` case where the subject itself is random.
 
 The policy is written by hand rather than derived from the subject's own AST, and
 that is deliberate: in `if (q <= 0) return "must be positive"` those comparisons are
@@ -413,15 +418,14 @@ Re-sequenced at **07:50 IST**. 2h10m remain before the window opens.
    previously-corrupted gallery cards (`max-empty-array`, `second-largest-duplicates`)
    no longer read `null` / `null` — if they do, the deploy is stale.
 4. ~~**Task 1.3 — the validator oracle.**~~ **DONE (07:50 IST).** Built and verified:
-   it reports `validateQty(true)` as a `bypass` (`expected: reject, actual: accept`,
-   class `validation-bypass`), and a correctly-written validator still produces no
-   false positive. The mechanism is type coercion rather than `NaN` — `true`, `null`
-   and `""` all compare false against both bounds. See §0.1. Typecheck clean,
-   selftest 13/13, benchmark unchanged at 95% / 0% / 70%.
-5. **Next engineering item:** wire the policy selector into the web UI (task 1.4) so
-   the bypass is reachable in one click rather than by pasting policy JSON. This is
-   now the top of the list, because a demo a judge cannot reach unaided does not
-   move the 30% criterion.
+   it reports a type-coercion `bypass` (`expected: reject, actual: accept`, class
+   `validation-bypass`) for `validateQty`, `isValidAge` and `isNull` shapes, and a
+   correctly-written validator still produces no false positive. See §0.1 for why the
+   reported input varies between runs. Typecheck clean, selftest 13/13, benchmark
+   unchanged at 95% / 0% / 70%.
+4a. ~~**Task 1.4 — policy selector in the UI.**~~ **ALREADY WIRED** (policies.ts →
+   Editor → App → api → server), verified with the exact payload the browser sends.
+   No work needed.
 
 Items 2 and 3 are the only things that can still produce a zero. Item 5 is the only
 remaining thing that meaningfully raises the score.

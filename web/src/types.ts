@@ -60,6 +60,11 @@ export interface AnalysisReport {
     summary: string
     source: 'library' | 'model' | 'user' | 'none' | 'policy' | 'policy-preset'
     code: string
+    /**
+     * 'accept' when the oracle is a validation policy, so findings are
+     * verdicts rather than values. Absent on the ordinary value path.
+     */
+    mode?: 'value' | 'accept'
   }
   baseline: { status: string; value?: unknown; error?: string }
   stats: {
