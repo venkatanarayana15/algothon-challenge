@@ -20,7 +20,7 @@ Then, from the **deployed URL** (not localhost), in an incognito window:
 - [ ] Hero shows a counterexample without scrolling
 - [ ] Click "Find the counterexample" → counterexample card appears
 - [ ] Mutation panel renders
-- [ ] Gallery renders all 13 cards, filters work
+- [ ] Gallery renders all 16 cards, filters work (3 security validators first)
 - [ ] Benchmark section renders with the three headline numbers
 - [ ] Works on a phone (narrow the window — do not skip this)
 - [ ] **Open the deployed URL with all LLM keys unset.** It must still work.
@@ -55,7 +55,8 @@ Paste-ready, in the order below. Keep the pitch under 120 characters.
 **Measured results**
 > 95% of seeded bugs detected (20/21), 0% false positives against nine
 > deliberately correct implementations, ~2s per analysis. Per-class detection
-> ranges 67–100% across twelve bug classes. One known miss is documented.
+> ranges 67–100% across the twelve bug classes the benchmark covers. One known
+> miss is documented.
 
 **Submission fields**
 
@@ -75,7 +76,7 @@ to know it works when you are not logged in.
 - [ ] Live URL — loads, demo works
 - [ ] GitHub repo — public, README renders, `npm install` steps are correct
 - [ ] Demo video — plays in the Unstop preview
-- [ ] Architecture diagram — if you attach one, it actually loads
+- [ ] Architecture diagram — `docs/architecture.svg`, embedded at the top of `ARCHITECTURE.md`; open it in incognito and confirm it renders
 
 ## T-minus 5 minutes: submit
 
@@ -92,9 +93,11 @@ Cut in this order. Never cut the live URL — a dead link scores zero.
 | Cut | Saves | Cost |
 |---|---|---|
 | Demo video | 10 min | A judge who won't click loses the full story |
-| Architecture diagram | 5 min | Minor |
 | Benchmark section on the site | 0 | Already built; leave it |
 | Extra gallery cards | 0 | Already built |
+
+The architecture diagram is already done and costs nothing to keep, so it is not
+on the cut list.
 
 **Do not** cut the live URL, the counterexample flow, or the seeded gallery.
 Those three are the project.

@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="706" viewBox="0 0 920 706" font-family="'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="title desc">
+  <title id="title">COUNTEREXAMPLE architecture</title>
+  <desc id="desc">Request path from the React single-page app through the Express API into the analysis engine: parse, resolve an oracle, generate biased inputs, run both implementations in a node:vm sandbox, compare, shrink, classify and verify. The optional model path is dashed.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowOpt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="920" height="706" fill="#ffffff"/>
+
+  <text x="40" y="42" font-size="21" font-weight="700" fill="#0f172a">COUNTEREXAMPLE — one analysis, end to end</text>
+  <text x="40" y="64" font-size="12" fill="#475569">Solid = deterministic core, no API key and no network. Dashed amber = optional model path, degrades to heuristics.</text>
+
+  <!-- Client -->
+  <rect x="40" y="88" width="840" height="58" rx="7" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="58" y="112" font-size="13" font-weight="700" fill="#0f172a">React SPA — web/src</text>
+  <text x="58" y="132" font-size="11" fill="#475569">Editor · seeded Gallery · result card. Gallery renders from committed web/src/data/*.json, so first paint needs zero API calls.</text>
+
+  <line x1="460" y1="146" x2="460" y2="172" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- API -->
+  <rect x="40" y="174" width="840" height="58" rx="7" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="58" y="198" font-size="13" font-weight="700" fill="#0f172a">Express — server/index.js</text>
+  <text x="58" y="218" font-size="11" fill="#475569">POST /api/analyze · GET /api/examples · GET /api/health (also the platform health check) · rate limit · toJsonSafe</text>
+
+  <line x1="460" y1="232" x2="460" y2="258" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Engine -->
+  <rect x="40" y="260" width="840" height="170" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <text x="58" y="284" font-size="13" font-weight="700" fill="#0f172a">ENGINE — server/engine/</text>
+
+  <rect x="60" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="120" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">analyze.js</text>
+  <text x="120" y="344" font-size="10" fill="#475569" text-anchor="middle">acorn AST walk</text>
+  <text x="120" y="360" font-size="10" fill="#475569" text-anchor="middle">infers each</text>
+  <text x="120" y="376" font-size="10" fill="#475569" text-anchor="middle">parameter type</text>
+  <text x="120" y="392" font-size="9" fill="#94a3b8" text-anchor="middle">bounds kept ambiguous</text>
+
+  <rect x="196" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="256" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">oracles.js</text>
+  <text x="256" y="344" font-size="10" fill="#475569" text-anchor="middle">14 hand-written</text>
+  <text x="256" y="360" font-size="10" fill="#475569" text-anchor="middle">reference impls,</text>
+  <text x="256" y="376" font-size="10" fill="#475569" text-anchor="middle">plus accept-mode</text>
+  <text x="256" y="392" font-size="9" fill="#b45309" text-anchor="middle">policy for validators</text>
+
+  <rect x="332" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="392" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">generator.js</text>
+  <text x="392" y="344" font-size="10" fill="#475569" text-anchor="middle">biased edges, not</text>
+  <text x="392" y="360" font-size="10" fill="#475569" text-anchor="middle">random: 0, 1, empty,</text>
+  <text x="392" y="376" font-size="10" fill="#475569" text-anchor="middle">NaN, MAX_SAFE</text>
+  <text x="392" y="392" font-size="9" fill="#94a3b8" text-anchor="middle">deterministic PRNG</text>
+
+  <rect x="468" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="528" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">sandbox.js</text>
+  <text x="528" y="344" font-size="10" fill="#475569" text-anchor="middle">node:vm, fresh</text>
+  <text x="528" y="360" font-size="10" fill="#475569" text-anchor="middle">context per request,</text>
+  <text x="528" y="376" font-size="10" fill="#475569" text-anchor="middle">frozen intrinsics</text>
+  <text x="528" y="392" font-size="9" fill="#94a3b8" text-anchor="middle">per-call wall clock</text>
+
+  <rect x="604" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="664" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">diff loop</text>
+  <text x="664" y="344" font-size="10" fill="#475569" text-anchor="middle">both sides on every</text>
+  <text x="664" y="360" font-size="10" fill="#475569" text-anchor="middle">input; stops at the</text>
+  <text x="664" y="376" font-size="10" fill="#475569" text-anchor="middle">first disagreement</text>
+  <text x="664" y="392" font-size="9" fill="#b45309" text-anchor="middle">accept vs reject</text>
+
+  <rect x="740" y="300" width="120" height="106" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="800" y="324" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">shrinker.js</text>
+  <text x="800" y="344" font-size="10" fill="#475569" text-anchor="middle">ddmin chunk removal,</text>
+  <text x="800" y="360" font-size="10" fill="#475569" text-anchor="middle">value ladder, type</text>
+  <text x="800" y="376" font-size="10" fill="#475569" text-anchor="middle">normalisation</text>
+  <text x="800" y="392" font-size="9" fill="#94a3b8" text-anchor="middle">arity preserved</text>
+
+  <line x1="180" y1="353" x2="194" y2="353" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="316" y1="353" x2="330" y2="353" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="452" y1="353" x2="466" y2="353" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="588" y1="353" x2="602" y2="353" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="724" y1="353" x2="738" y2="353" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <line x1="800" y1="406" x2="800" y2="432" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Post-processing -->
+  <rect x="40" y="434" width="840" height="96" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <text x="58" y="458" font-size="13" font-weight="700" fill="#0f172a">POST-PROCESSING</text>
+
+  <rect x="65" y="470" width="250" height="48" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="190" y="490" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">classify.js</text>
+  <text x="190" y="508" font-size="10" fill="#475569" text-anchor="middle">13 bug classes, heuristic</text>
+
+  <rect x="335" y="470" width="250" height="48" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="460" y="490" font-size="11.5" font-weight="700" fill="#0f172a" text-anchor="middle">verify — mutation score</text>
+  <text x="460" y="508" font-size="10" fill="#475569" text-anchor="middle">6 operator faults injected</text>
+
+  <rect x="605" y="470" width="250" height="48" rx="6" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="730" y="490" font-size="11.5" font-weight="700" fill="#b45309" text-anchor="middle">llm.js — optional</text>
+  <text x="730" y="508" font-size="10" fill="#b45309" text-anchor="middle">oracle synthesis, prose</text>
+
+  <line x1="315" y1="494" x2="333" y2="494" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="585" y1="494" x2="603" y2="494" stroke="#b45309" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrowOpt)"/>
+
+  <line x1="460" y1="530" x2="460" y2="556" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Response -->
+  <rect x="40" y="558" width="840" height="74" rx="7" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="58" y="582" font-size="13" font-weight="700" fill="#0f172a">RESPONSE — JSON report</text>
+  <text x="58" y="602" font-size="11" fill="#475569">finding.args · minimal.call · verdict (bypass / false-rejection) · bugClass · root cause · fix · mutation score · analysisMs</text>
+  <text x="58" y="620" font-size="11" fill="#475569">Status is one of: counterexample-found · no-counterexample-found · oracle-missing.</text>
+
+  <text x="40" y="662" font-size="11" fill="#475569">Containment note: the subject runs in node:vm with frozen intrinsics and a wall-clock timeout. That stops a runaway loop,</text>
+  <text x="40" y="678" font-size="11" fill="#475569">and it is deliberately not described as a security boundary — real containment needs process isolation.</text>
+  <text x="40" y="696" font-size="11" fill="#475569">A validator is compared on acceptance, not output: the policy is hand-stated, never inferred from the subject it polices.</text>
+</svg>

@@ -3,6 +3,12 @@
 Notes on why the engine is built the way it is. The interesting decisions were
 all forced by a failure during development, so those are recorded here.
 
+## Architecture
+
+![Architecture of the analysis pipeline, from the React app through the Express API into the parse, oracle, generate, sandbox, diff and shrink stages, with classification, mutation verification and the optional model path](docs/architecture.svg)
+
+The same diagram as SVG source is at [`docs/architecture.svg`](docs/architecture.svg), so it stays legible at any zoom and survives export to PDF.
+
 ## Pipeline
 
 ```
@@ -80,9 +86,10 @@ rate-limit at the wrong moment should not cost a point.
 ### The gallery is generated, not written
 
 `web/src/data/snapshot.json` is produced by running the real engine over all
-thirteen seeded examples. The landing page renders from it, so the first paint
-costs zero network requests and cannot fail to load. If the engine regresses,
-the site starts telling a different — and true — story.
+sixteen seeded examples (three security validators, twelve general cases, and the
+provenance case). The landing page renders from it, so the first paint costs zero
+network requests and cannot fail to load. If the engine regresses, the site starts
+telling a different — and true — story.
 
 ### The benchmark includes controls, and reports its own failures
 

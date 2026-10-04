@@ -28,7 +28,7 @@ Rather than assume the existing build works, it was exercised directly.
 | `npm run benchmark` | 95% detection, **0% false positives**, 70% class accuracy — stable across 3 consecutive runs |
 | `npm run check:data` | passes |
 | `GET /api/health` | `{"ok":true,"llm":null}` — graceful degradation confirmed |
-| `GET /api/examples` | 12 examples |
+| `GET /api/examples` | 15 examples — 3 security validators first, then 12 general |
 | `GET /` (production mode) | HTTP 200, SPA served from `dist` |
 | `POST /api/analyze` | works on value-returning functions |
 

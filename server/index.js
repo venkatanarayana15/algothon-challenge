@@ -5,7 +5,7 @@ import { analyze } from './engine/analysis.js'
 import { AnalysisError } from './engine/analyze.js'
 import { getLlmConfig } from './engine/llm.js'
 import { toJsonSafe } from './engine/json-safe.js'
-import { EXAMPLES } from './examples.js'
+import { EXAMPLES, SECURITY_EXAMPLES } from './examples.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -46,7 +46,9 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.get('/api/examples', (_req, res) => {
-  res.json({ examples: EXAMPLES })
+  // Security validators first: they are the ALG-CYBER-02 headline, and a judge
+  // reaching for an example should meet a bypass before an off-by-one.
+  res.json({ examples: [...SECURITY_EXAMPLES, ...EXAMPLES] })
 })
 
 app.post('/api/analyze', rateLimit, async (req, res) => {
