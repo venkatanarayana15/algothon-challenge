@@ -216,7 +216,7 @@ export function Editor({
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
-          placeholder={'// Paste a function and we will find the input that breaks it.\nfunction isPrime(n) {\n  if (n < 2) return true;\n  for (let d = 2; d * d <= n; d++) {\n    if (n % d === 0) return false;\n  }\n  return true;\n}'}
+          placeholder={'// Paste a function -- an input validator if you have one -- and we\n// will find the input it should have rejected but did not.\nfunction validateQty(q) {\n  if (q <= 0) return "quantity must be positive";\n  if (q > 100) return "quantity exceeds maximum";\n  return null;\n}'}
           className="code-area min-h-[13rem] flex-1 px-4 py-3"
           aria-label="Function source code"
         />

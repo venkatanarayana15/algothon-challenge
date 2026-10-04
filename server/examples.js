@@ -25,7 +25,7 @@ function fib(n) {
   if (n === 0) return 0;
   return fib(n - 1) + fib(n - 2);
 }`,
-    counterexample: 'fib(-1)',
+    counterexample: `fib(-1)`,
     rootCause:
       'The guard only covers n === 0. For n = 1 the function evaluates fib(-1), which is not covered, so recursion never terminates.',
     fix: `if (n <= 1) return n;`,
@@ -49,7 +49,7 @@ function isPrime(n) {
   }
   return true;
 }`,
-    counterexample: 'isPrime(1)',
+    counterexample: `isPrime(-1)`,
     rootCause:
       'The early return for n < 2 returns true instead of false, so every value below 2 is reported as prime.',
     fix: `if (n < 2) return false;`,
@@ -72,7 +72,7 @@ function gcd(a, b) {
   }
   return a;
 }`,
-    counterexample: 'gcd(-8, 4)',
+    counterexample: `gcd(-1, 0)`,
     rootCause:
       'The loop condition requires b > 0, so a negative b exits immediately and the function returns a instead of the true gcd.',
     fix: `a = Math.abs(a); b = Math.abs(b); while (b) { ... }`,
@@ -94,7 +94,7 @@ function sum(nums) {
   }
   return total;
 }`,
-    counterexample: 'sum([])',
+    counterexample: `sum([])`,
     rootCause:
       'The accumulator is seeded with nums[0] rather than 0, so an empty array yields undefined instead of 0.',
     fix: `let total = 0;`,
@@ -116,7 +116,7 @@ function max(nums) {
   }
   return best;
 }`,
-    counterexample: 'max([])',
+    counterexample: `max([])`,
     rootCause:
       '-Infinity is a sentinel for "no value yet", but it leaks out as the return value for an empty array.',
     fix: 'Return undefined when the array is empty, or document that the input must be non-empty.',
@@ -141,7 +141,7 @@ function secondLargest(nums) {
   }
   return second === -Infinity ? null : second;
 }`,
-    counterexample: 'secondLargest([4, 4])',
+    counterexample: `secondLargest([Infinity, Infinity])`,
     rootCause:
       'The else-branch accepts equal values, so a repeated maximum is reported as its own second largest.',
     fix: 'Require v < first in the else-branch.',
@@ -163,7 +163,7 @@ function reverseString(s) {
   }
   return out;
 }`,
-    counterexample: "reverseString('a')",
+    counterexample: `reverseString("u")`,
     rootCause:
       'The loop stops one character early, so the final character is never copied. The bug is invisible for empty strings.',
     fix: 'for (let i = 0; i < s.length; i++)',
@@ -186,7 +186,7 @@ function countVowels(s) {
   }
   return n;
 }`,
-    counterexample: "countVowels('a')",
+    counterexample: `countVowels(" ")`,
     rootCause:
       'Starting at index 1 skips the first character, and reading s[s.length] produces undefined, so .toLowerCase() throws.',
     fix: 'for (let i = 0; i < s.length; i++)',
@@ -206,7 +206,7 @@ function rotateRight(nums, k) {
   const r = k % nums.length;
   return nums.slice(nums.length - r).concat(nums.slice(0, nums.length - r));
 }`,
-    counterexample: 'rotateRight([1, 2, 3], -1)',
+    counterexample: `rotateRight([1, 0], -1)`,
     rootCause:
       'In JavaScript -1 % 3 is -1, not 2, so slice receives a negative index and the rotation goes the wrong way.',
     fix: 'const r = ((k % nums.length) + nums.length) % nums.length;',
@@ -227,7 +227,7 @@ function isSorted(nums) {
   }
   return true;
 }`,
-    counterexample: 'isSorted([1, 2])',
+    counterexample: `isSorted([1, 0])`,
     rootCause:
       'The predicate marks any increase as unsorted. It returns true only for arrays that are already decreasing.',
     fix: 'if (nums[i] < nums[i - 1]) return false;',
@@ -245,7 +245,7 @@ function isSorted(nums) {
 function removeDuplicates(nums) {
   return [...new Set(nums)].sort((a, b) => a - b);
 }`,
-    counterexample: 'removeDuplicates([3, 1, 2])',
+    counterexample: `removeDuplicates([1, 0])`,
     rootCause:
       'A Set preserves insertion order, but the trailing sort discards it. The result is correct as a multiset and wrong as a sequence.',
     fix: 'return [...new Set(nums)];',
@@ -271,7 +271,7 @@ function binarySearch(nums, target) {
   }
   return -1;
 }`,
-    counterexample: 'binarySearch([1, 2, 3], 1)',
+    counterexample: `binarySearch([1], 1)`,
     rootCause:
       'The match branch returns mid + 1, shifting every hit one position to the right. It still returns -1 correctly for misses, which is why tests rarely catch it.',
     fix: 'return mid;',
@@ -307,7 +307,7 @@ function validateQty(q) {
   if (q > 100) return 'too many';
   return null;
 }`,
-    counterexample: 'validateQty(NaN)',
+    counterexample: `validateQty(NaN)`,
     rootCause:
       'Every comparison with NaN is false, so both guards fall through and the function returns null — meaning accepted. A range check written this way rejects -1 and 1e9 while waving through NaN, which then flows into arithmetic and poisons the total.',
     fix: 'Reject non-numbers before the range test: `if (typeof q !== "number" || !Number.isFinite(q)) return "not a number";`',
@@ -327,7 +327,7 @@ function validateAge(age) {
   if (age > 120) return 'implausible age';
   return null;
 }`,
-    counterexample: 'validateAge(NaN)',
+    counterexample: `validateAge(NaN)`,
     rootCause:
       'The string "25" also passes, because JavaScript coerces it for both comparisons. The check constrains a range without ever establishing that it was given a number, so non-numeric values are coerced into looking valid.',
     fix: 'Establish the type first: `if (typeof age !== "number" || !Number.isFinite(age)) return "not a number";`',
@@ -347,7 +347,7 @@ function validatePort(port) {
   if (port > 65535) return 'port out of range';
   return null;
 }`,
-    counterexample: 'validatePort(NaN)',
+    counterexample: `validatePort(NaN)`,
     rootCause:
       'The bounds are right, so this reads as correct on inspection. But NaN satisfies neither comparison, so an undefined port reaches the client as an accepted value and the failure surfaces later, somewhere unrelated.',
     fix: 'Reject NaN explicitly: `if (!Number.isFinite(port)) return "not a number";`',
@@ -378,7 +378,7 @@ function indexOfTarget(nums, target) {
   if (nums[0] === target) return 0;
   return -1;
 }`,
-  counterexample: 'indexOfTarget([5, 5], 5)',
+  counterexample: `indexOfTarget([1, 1], 1)`,
   rootCause:
     'The loop starts at index 1 and the array is scanned before index 0 is checked, so the first element is only handled by a special case that runs last. This is the shape of bug that code review does not catch: every individual line is defensible.',
   fix: 'Scan from index 0 and drop the special case.',

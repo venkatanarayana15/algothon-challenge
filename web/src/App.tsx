@@ -39,14 +39,24 @@ import { CounterexampleCard } from './components/CounterexampleCard'
 import { MutationPanel } from './components/MutationPanel'
 import { ExplanationPanel } from './components/ExplanationPanel'
 
-const DEFAULT_CODE = `// isPrime(n) -> boolean
-// Classic example. It passes every test anyone would write by hand.
-function isPrime(n) {
-  if (n < 2) return true;
-  for (let d = 2; d * d <= n; d++) {
-    if (n % d === 0) return false;
-  }
-  return true;
+/**
+ * What the editor starts with.
+ *
+ * Deliberately a validator rather than a generic algorithm. Two reasons: it is
+ * what ALG-CYBER-02 asks about, and it produces the most legible result the tool
+ * has -- `validateQty(NaN)` is one line of ordinary code that passes review
+ * everywhere it gets written, and the finding is unmistakable.
+ *
+ * It needs no configuration. The policy is inferred from the function's own
+ * comparisons, so a judge can paste their own validator and get the same class
+ * of answer with nothing selected.
+ */
+const DEFAULT_CODE = `// POST /cart/items  ->  null | error string
+// Returns null when the quantity is accepted, an error message otherwise.
+function validateQty(q) {
+  if (q <= 0) return 'quantity must be positive';
+  if (q > 100) return 'quantity exceeds maximum';
+  return null;
 }`
 
 /** The id of the seeded case the one-click demo reproduces. */
