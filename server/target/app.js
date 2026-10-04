@@ -88,6 +88,10 @@ export const LEGITIMATE_CASES = [
   { id: 'pw-reject-empty', fn: 'isStrongEnoughPassword', args: [''], expectAccept: false, note: 'empty rejected' },
 
   { id: 'auth-valid-user', fn: 'authorize', args: ['user', 1], expectAccept: true, note: 'level-1 user allowed' },
+  // The case the V3 bug itself breaks: an ordinary user the inverted predicate
+  // locks out. The vulnerable version rejects this; the fix restores it. It is
+  // the only legitimate case expected to *change* outcome, from fail to pass.
+  { id: 'auth-valid-user-level2', fn: 'authorize', args: ['user', 2], expectAccept: true, note: 'ordinary user allowed' },
   { id: 'auth-valid-admin', fn: 'authorize', args: ['admin', 0], expectAccept: true, note: 'admin always allowed' },
   { id: 'auth-reject-unknown', fn: 'authorize', args: ['ghost', 9], expectAccept: false, note: 'unknown role rejected' },
 ]

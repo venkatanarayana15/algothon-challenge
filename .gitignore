@@ -14,3 +14,6 @@ dist/
 # Temp copy written by verify:regression-test to prove the suite goes red.
 .vulnerable-regression.test.mjs
 .e2e-generated.test.mjs
+
+# demo video build artefacts
+docs/.frames/

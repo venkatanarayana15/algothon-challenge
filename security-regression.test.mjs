@@ -4,14 +4,14 @@
  * Deliberately vulnerable application — 3 findings
  *
  * Generated from a real audit run: 3 findings,
- * each one detected, patched, and retested. 12 legitimate cases
+ * each one detected, patched, and retested. 13 legitimate cases
  * were checked against the patched application and all still behave correctly.
  *
  * Run it:
  *
  *     node --test security-regression.test.mjs
  *
- * 3 vulnerability tests and 12 legitimate-behaviour tests.
+ * 3 vulnerability tests and 13 legitimate-behaviour tests.
  *
  * These tests are written against the FIXED behaviour, so they fail against the
  * vulnerable version by design — that is what makes them regression tests rather
@@ -106,8 +106,8 @@ test('V3: authorize rejects an input that bypasses the rule', () => {
 
 /**
  * The fix must not change behaviour on valid input. These are the
- * 12 legitimate cases checked during the audit --
- * 12 of them passed after the fixes, and nothing that used to work stopped working.
+ * 13 legitimate cases checked during the audit --
+ * 13 of them passed after the fixes, and nothing that used to work stopped working.
  */
 describe('legitimate behaviour is preserved', () => {
 
@@ -186,6 +186,14 @@ test('pw-reject-empty: isStrongEnoughPassword empty rejected', () => {
 test('auth-valid-user: authorize level-1 user allowed', () => {
   assert.strictEqual(
     accepts('authorize')(authorize(...["user", 1])),
+    true,
+    'expected authorize to accept this input',
+  )
+})
+
+test('auth-valid-user-level2: authorize ordinary user allowed', () => {
+  assert.strictEqual(
+    accepts('authorize')(authorize(...["user", 2])),
     true,
     'expected authorize to accept this input',
   )
