@@ -23,7 +23,8 @@
   "dependencies": {
     "acorn": "^8.14.0",
     "acorn-walk": "^8.3.4",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "vite": "^6.0.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
@@ -34,7 +35,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.5"
+    "typescript": "^5.7.2"
   }
 }
