@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/venkatanarayana15/algothon-challenge/actions/workflows/ci.yml/badge.svg)](https://github.com/venkatanarayana15/algothon-challenge/actions/workflows/ci.yml)
 
-<!-- LIVE-DEMO-URL -->
+**Live demo:** https://algothon-challenge.onrender.com
 
 Every developer writes tests for the inputs they imagined, and the bugs live in
 the inputs nobody did. For security code the gap is sharper still: an input
@@ -68,10 +68,10 @@ not work** — Vercel's static tier, Netlify Pages and S3 all lack a runtime.
 Render, Fly, Railway, a VPS or Cloudflare Workers with Node compatibility are the
 options that do.
 
-> **Adding the deployed URL to this README:** replace the `<!-- LIVE-DEMO-URL -->`
-> marker near the top with a line like
-> `**Live demo:** https://your-app.onrender.com`. It is a single line and it is
-> the first thing a judge looks for.
+Deployed on Render at
+**https://algothon-challenge.onrender.com**. It runs the engine server-side, so
+the analysis, the fixes and the regression suite all work in the browser exactly
+as they do locally — nothing is precomputed except the example gallery.
 
 ---
 
